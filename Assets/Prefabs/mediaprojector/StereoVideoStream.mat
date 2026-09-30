@@ -1,0 +1,190 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: StereoVideoStream
+  m_Shader: {fileID: 4800000, guid: a6424f35e4c997a459acde086d11006b, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _APPSTATE_LOADING
+  - _RENDERMODE_ALPHA
+  - _STEREOENABLED_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2999
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: _EnableCosmic
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ParallaxMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SpecGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _APPSTATE: 1
+    - _AddPrecomputedVelocity: 0
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Amplitude: 0.34
+    - _Aspect: 1.37
+    - _Blend: 0
+    - _BlendModePreserveSpecular: 1
+    - _BumpScale: 1
+    - _ClearCoatMask: 0
+    - _ClearCoatSmoothness: 0
+    - _Cull: 2
+    - _CullMode: 2
+    - _Cutoff: 0.02
+    - _DetailAlbedoMapScale: 1
+    - _DetailNormalMapScale: 1
+    - _DstBlend: 10
+    - _DstBlendAlpha: 0
+    - _EnableCosmic: 0
+    - _EnvironmentReflections: 1
+    - _Frequency: 1
+    - _GlobalAlpha: 1
+    - _GlobalScale: 0.2
+    - _GlossMapScale: 0
+    - _Glossiness: 0
+    - _GlossyReflections: 0
+    - _GradDensity: 1.5
+    - _GradRotationSpeed: 1
+    - _GradSpeed: 0.3
+    - _LoadingFade: 0
+    - _MaskFadeOffset: -0.0174
+    - _MaskFeather: 0.023
+    - _MaskRadius: 0.1
+    - _Metallic: 0
+    - _NoiseDensity: 1.42
+    - _NoiseStrength: 3.93
+    - _OcclusionStrength: 1
+    - _Parallax: 0.005
+    - _PlasmaContrast: 5
+    - _PointSize: 0.005
+    - _QueueOffset: 0
+    - _ReceiveShadows: 1
+    - _RenderMode: 0
+    - _RevealProgress: 0
+    - _SRGBToLinear: 0
+    - _Smoothness: 0.5
+    - _SmoothnessTextureChannel: 0
+    - _SpecularHighlights: 1
+    - _Speed: 0.3
+    - _SpinnerAspect: 1.84
+    - _SpinnerDotSize: 0.05
+    - _SpinnerRadius: 0.046
+    - _SpinnerSpeed: 1
+    - _SrcBlend: 5
+    - _SrcBlendAlpha: 1
+    - _StereoEnabled: 1
+    - _Surface: 0
+    - _VideoFade: 0
+    - _WorkflowMode: 1
+    - _ZWrite: 0
+    m_Colors:
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color1: {r: 0.06666667, g: 0.078431375, b: 0.1764706, a: 1}
+    - _Color2: {r: 0.8745098, g: 0.85882354, b: 1, a: 1}
+    - _Color3: {r: 0, g: 0.29803923, b: 0.7254902, a: 0.9411765}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _GlobalOffset: {r: 0, g: 0.1, b: 0, a: 0}
+    - _GlobalUvScale: {r: 1, g: 0.8, b: 0, a: 0}
+    - _GradColor1: {r: 0.08699996, g: 0.07299996, b: 0.16899997, a: 0.9}
+    - _GradColor2: {r: 0.29799998, g: 0.35799998, b: 0.85, a: 1}
+    - _GradColor3: {r: 0.42999998, g: 0.34099993, b: 0.721, a: 1}
+    - _GradientColor1: {r: 0, g: 0.14901961, b: 0.3627451, a: 1}
+    - _GradientColor2: {r: 0, g: 0.042442538, b: 0.36477977, a: 1}
+    - _GradientColor3: {r: 1, g: 1, b: 1, a: 1}
+    - _GradientUvScale: {r: 1, g: 0.75, b: 0, a: 0}
+    - _PlasmaColor1: {r: 0, g: 0.14424841, b: 0.99371064, a: 0.9411765}
+    - _PlasmaColor2: {r: 1.7701786, g: 2.183539, b: 3.1100378, a: 0.9411765}
+    - _PlasmaColor3: {r: 0.021735672, g: 0.024213867, b: 0.044025123, a: 0.9411765}
+    - _PlasmaColorB: {r: 0.0002763311, g: 0.0003250954, b: 0.00073146465, a: 1}
+    - _PlasmaColorG: {r: 1.7490196, g: 1.7176471, b: 2, a: 1}
+    - _PlasmaColorR: {r: 0, g: 0.22316004, b: 1.4980392, a: 1}
+    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _SpinnerBgColor: {r: 0, g: 0, b: 0, a: 0.39215687}
+    - _SpinnerColor: {r: 1, g: 1, b: 1, a: 1}
+    - _TexOffset: {r: 0, g: 0.5, b: 0, a: 0}
+    - _TexScale: {r: 1, g: 0.5, b: 0, a: 0}
+    - _UvScale: {r: 1, g: 1, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
+--- !u!114 &3425274431721958289
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 10

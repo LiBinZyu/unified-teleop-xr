@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0c6ac9a66c84d3d98d7506d9cfa2c74, type: 3}
+  m_Name: XRI_Right_Is_Tracked
+  m_EditorClassIdentifier: 
+  isEnabled: 1
+  channelType: 4
+  topicName: rt/xr/right/is_tracked
+  frameId: map
+  qos: 2
+  inputAction:
+    m_UseReference: 1
+    m_Action:
+      m_Name: 
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: d60052c0-6749-4b25-8357-c50626479821
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: -3456417404725788640, guid: c348712bda248c246b8c49b3db54643f,
+      type: 3}
+  convertToRosCoordinates: 0

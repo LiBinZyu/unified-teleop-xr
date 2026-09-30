@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12fbe005df88efd4dac553f649643a6e, type: 3}
+  m_Name: Teleop_RecordStop
+  m_EditorClassIdentifier: 
+  speechClips:
+  - language: 0
+    clip: {fileID: 8300000, guid: ad20ddf4da97fac40af2a04224ebb873, type: 3}
+  - language: 1
+    clip: {fileID: 8300000, guid: f9ab53d95ac81f7458f227e38664f683, type: 3}
+  - language: 2
+    clip: {fileID: 8300000, guid: 87bfb5930d5b7f344b4ee57c3fb6e8d3, type: 3}

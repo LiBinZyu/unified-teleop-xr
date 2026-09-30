@@ -1,0 +1,507 @@
+{
+  "Reliable": {
+    "zh_CN": "可靠传输",
+    "en_Au": "Reliable",
+    "jp": "高信頼性"
+  },
+  "BestEffort": {
+    "zh_CN": "尽力传输",
+    "en_Au": "Best-Effort",
+    "jp": "ベストエフォート"
+  },
+  "Transport Protocol": {
+    "zh_CN": "传输协议",
+    "en_Au": "Transport Protocol",
+    "jp": "通信プロトコル"
+  },
+  "Invalid": {
+    "zh_CN": "无效",
+    "en_Au": "Invalid",
+    "jp": "無効"
+  },
+  "Battery": {
+    "zh_CN": "电量",
+    "en_Au": "Battery",
+    "jp": "バッテリー"
+  },
+  " Setting": {
+    "zh_CN": "设置",
+    "en_Au": " Setting",
+    "jp": "設定"
+  },
+  "Please enter": {
+    "zh_CN": "请输入",
+    "en_Au": "Please enter",
+    "jp": "入力してください"
+  },
+  "Height (cm)": {
+    "zh_CN": "身高 (厘米)",
+    "en_Au": "Height (cm)",
+    "jp": "身長 (cm)"
+  },
+  "IP address": {
+    "zh_CN": "IP 地址",
+    "en_Au": "IP address",
+    "jp": "IPアドレス"
+  },
+  "Please charge your device to avoid system disconnection and unexpected errors.": {
+    "zh_CN": "请为您的设备充电，以避免系统断线及发生未知错误。",
+    "en_Au": "Please charge your device to avoid system disconnection and unexpected errors.",
+    "jp": "システムの切断や予期せぬエラーを防ぐため、デバイスを充電してください。"
+  },
+  "Turn on and setup motion tracker to access to all features.": {
+    "zh_CN": "请点击打开配置体感追踪以使用完整功能。",
+    "en_Au": "Turn on and setup motion tracker to access to all features.",
+    "jp": "すべての機能を利用するには、モーショントラッカーを起動してセットアップしてください。"
+  },
+  "Calibrating, Please stretch the arms.": {
+    "zh_CN": "握紧手柄，将双臂在前方呈V字型完全伸展。",
+    "en_Au": "Calibrating, Please stretch the arms.",
+    "jp": "キャリブレーション中、腕を伸ばしてください。"
+  },
+  "Teleoperation": {
+    "zh_CN": "遥操作",
+    "en_Au": "Teleoperation",
+    "jp": "テレオペレーション"
+  },
+  "Teleop": {
+    "zh_CN": "遥操作",
+    "en_Au": "Teleop",
+    "jp": "テレオペ"
+  },
+  "Connect": {
+    "zh_CN": "连接",
+    "en_Au": "Connect",
+    "jp": "接続"
+  },
+  " Connect": {
+    "zh_CN": "连接",
+    "en_Au": " Connect",
+    "jp": "接続"
+  },
+  "Connection": {
+    "zh_CN": "连接",
+    "en_Au": "Connection",
+    "jp": "接続"
+  },
+  "Controller": {
+    "zh_CN": "控制器",
+    "en_Au": "Controller",
+    "jp": "コントローラー"
+  },
+  "Motion Tracker": {
+    "zh_CN": "体感追踪器",
+    "en_Au": "Motion Tracker",
+    "jp": "モーショントラッカー"
+  },
+  "Motion Tracking": {
+    "zh_CN": "体感追踪",
+    "en_Au": "Motion Tracking",
+    "jp": "モーショントラッキング"
+  },
+  "For optimal performance, please turn off Wifi and connect via cable.": {
+    "zh_CN": "请关闭 Wifi，并使用有线网络，以确保最佳体验。",
+    "en_Au": "For optimal performance, please turn off Wifi and connect via cable.",
+    "jp": "最適なパフォーマンスを得るため、Wi-Fiをオフにしてケーブルで接続してください。"
+  },
+  "Please close this panel to prevent frame drops and ensure teleoperation data quality.": {
+    "zh_CN": "请关闭此面板以防止丢帧并确保遥操作数据质量。",
+    "en_Au": "Please close this panel to prevent frame drops and ensure teleoperation data quality.",
+    "jp": "フレーム落ちを防ぎ遠隔操作データの品質を保つため、このパネルを閉じることを推奨します。"
+  },
+  "End-effector": {
+    "zh_CN": "机械臂末端",
+    "en_Au": "End-effector",
+    "jp": "エンドエフェクタ"
+  },
+  "Please enter {0}": {
+    "zh_CN": "请输入 {0}",
+    "en_Au": "Please enter {0}",
+    "jp": "{0}を入力してください"
+  },
+  "zh_CN": {
+    "zh_CN": "中文",
+    "en_Au": "中文",
+    "jp": "中文"
+  },
+  "en_Au": {
+    "zh_CN": "English",
+    "en_Au": "English",
+    "jp": "English"
+  },
+  "jp": {
+    "zh_CN": "日本語",
+    "en_Au": "日本語",
+    "jp": "日本語"
+  },
+  "Developer": {
+    "zh_CN": "开发者",
+    "en_Au": "Developer",
+    "jp": "開発者"
+  },
+  "TCP": {
+    "zh_CN": "主机",
+    "en_Au": "Host",
+    "jp": "ホスト"
+  },
+  "Port": {
+    "zh_CN": "端口",
+    "en_Au": "Port",
+    "jp": "ポート"
+  },
+  " Port": {
+    "zh_CN": "端口",
+    "en_Au": " Port",
+    "jp": "ポート"
+  },
+  "UDP": {
+    "zh_CN": "体感控制",
+    "en_Au": "Data",
+    "jp": "体感制御"
+  },
+  " stop sending": {
+    "zh_CN": "停止发送",
+    "en_Au": " stop sending",
+    "jp": "送信停止"
+  },
+  " start sending": {
+    "zh_CN": "开始发送",
+    "en_Au": " start sending",
+    "jp": "送信開始"
+  },
+  " Disconnect": {
+    "zh_CN": "断开",
+    "en_Au": " Disconnect",
+    "jp": "切断"
+  },
+  "Send": {
+    "zh_CN": "发送",
+    "en_Au": "Send",
+    "jp": "送信"
+  },
+  "Receive": {
+    "zh_CN": "接收",
+    "en_Au": "Receive",
+    "jp": "受信"
+  },
+  "WebRTC": {
+    "zh_CN": "空间视频",
+    "en_Au": "Spatial Video",
+    "jp": "空間ビデオ"
+  },
+  " stop receiving": {
+    "zh_CN": "停止接收",
+    "en_Au": " stop receiving",
+    "jp": "受信停止"
+  },
+  "Quit": {
+    "zh_CN": "退出",
+    "en_Au": "Quit",
+    "jp": "終了"
+  },
+  "Change decoding": {
+    "zh_CN": "解码变更",
+    "en_Au": "Change decoding",
+    "jp": "デコード切替"
+  },
+  "Bandwidth": {
+    "zh_CN": "带宽",
+    "en_Au": "Bandwidth",
+    "jp": "帯域幅"
+  },
+  "Resolution": {
+    "zh_CN": "分辨率",
+    "en_Au": "Resolution",
+    "jp": "解像度"
+  },
+  "Frame Rate": {
+    "zh_CN": "帧率",
+    "en_Au": "Frame Rate",
+    "jp": "フレームレート"
+  },
+  "RTT": {
+    "zh_CN": "RTT",
+    "en_Au": "RTT",
+    "jp": "RTT"
+  },
+  "Packet Rate": {
+    "zh_CN": "包率",
+    "en_Au": "Packet Rate",
+    "jp": "パケットレート"
+  },
+  "Lost Packets": {
+    "zh_CN": "丢包",
+    "en_Au": "Lost Packets",
+    "jp": "パケットロス"
+  },
+  "Codec": {
+    "zh_CN": "编码",
+    "en_Au": "Codec",
+    "jp": "コーデック"
+  },
+  "Avg Decode": {
+    "zh_CN": "平均解码",
+    "en_Au": "Avg Decode",
+    "jp": "平均デコード"
+  },
+  "Jitter Buffer": {
+    "zh_CN": "抖动缓冲",
+    "en_Au": "Jitter Buffer",
+    "jp": "ジッターバッファ"
+  },
+  "Jitter": {
+    "zh_CN": "抖动",
+    "en_Au": "Jitter",
+    "jp": "ジッター"
+  },
+  "Local Bitrate": {
+    "zh_CN": "接收码率",
+    "en_Au": "Local Bitrate",
+    "jp": "受信ビットレート"
+  },
+  "Frames Dropped": {
+    "zh_CN": "丢弃帧",
+    "en_Au": "Dropped Frames",
+    "jp": "ドロップフレーム"
+  },
+  "NACK/PLI/FIR": {
+    "zh_CN": "重传/关键帧/完整帧请求",
+    "en_Au": "NACK/PLI/FIR",
+    "jp": "NACK/PLI/FIR"
+  },
+  "UI_STATE_IDLE": {
+    "zh_CN": "等待连接... 请点击关闭视频后再次打开",
+    "en_Au": "Waiting to connect... Please click close video and open again",
+    "jp": "接続待ち... ビデオを閉じてから再度開いてください"
+  },
+  "UI_STATE_CONNECTING": {
+    "zh_CN": "正在连接到",
+    "en_Au": "Connecting to",
+    "jp": "接続中: "
+  },
+  "UI_STATE_SIGNALING": {
+    "zh_CN": "信令交换中...",
+    "en_Au": "Signaling...",
+    "jp": "シグナリング中..."
+  },
+  "UI_STATE_NEGOTIATING": {
+    "zh_CN": "等待流数据...",
+    "en_Au": "Waiting for data...",
+    "jp": "データ受信待ち..."
+  },
+  "UI_STATE_TIMEOUT": {
+    "zh_CN": "连接超时",
+    "en_Au": "Connection timeout",
+    "jp": "接続タイムアウト"
+  },
+  "UI_STATE_ERROR": {
+    "zh_CN": "发生错误",
+    "en_Au": "Error",
+    "jp": "エラー発生"
+  },
+  "UI_STATE_NO_NETWORK": {
+    "zh_CN": "网络不可用",
+    "en_Au": "Network unreachable",
+    "jp": "ネットワーク接続不可"
+  },
+  "Recording": {
+    "zh_CN": "录制",
+    "en_Au": "Recording",
+    "jp": "録画"
+  },
+  "Long press": {
+    "zh_CN": "长按",
+    "en_Au": "Long press",
+    "jp": "長押し"
+  },
+  "Reset Origin": {
+    "zh_CN": "原点重置",
+    "en_Au": "Reset Origin",
+    "jp": "原点リセット"
+  },
+  "Front": {
+    "zh_CN": "前方",
+    "en_Au": "Front",
+    "jp": "前方"
+  },
+  "Robot Reset": {
+    "zh_CN": "机器人复位",
+    "en_Au": "Robot Reset",
+    "jp": "ロボットリセット"
+  },
+  "Start Joystick Locomotion": {
+    "zh_CN": "启动摇杆移动",
+    "en_Au": "Start Joystick Locomotion",
+    "jp": "ジョイスティック移動開始"
+  },
+  "Start Fullbody Locomotion": {
+    "zh_CN": "启动全身移动",
+    "en_Au": "Start Fullbody Locomotion",
+    "jp": "全身移動開始"
+  },
+  "Stop Locomotion": {
+    "zh_CN": "结束移动",
+    "en_Au": "Stop Locomotion",
+    "jp": "移動終了"
+  },
+  "L+R": {
+    "zh_CN": "左+右",
+    "en_Au": "L+R",
+    "jp": "左+右"
+  },
+  "Screencast URL": {
+    "zh_CN": "投屏地址",
+    "en_Au": "Screencast URL",
+    "jp": "画面キャストURL"
+  },
+  "State": {
+    "zh_CN": "状态",
+    "en_Au": "State",
+    "jp": "状態"
+  },
+  "Viewers": {
+    "zh_CN": "观看人数",
+    "en_Au": "Viewers",
+    "jp": "視聴者数"
+  },
+  "Error": {
+    "zh_CN": "错误",
+    "en_Au": "Error",
+    "jp": "エラー"
+  },
+  "Idle": {
+    "zh_CN": "空闲",
+    "en_Au": "Idle",
+    "jp": "待機"
+  },
+  "Starting": {
+    "zh_CN": "启动中",
+    "en_Au": "Starting",
+    "jp": "起動中"
+  },
+  "Running": {
+    "zh_CN": "运行中",
+    "en_Au": "Running",
+    "jp": "配信中"
+  },
+  "Stopping": {
+    "zh_CN": "停止中",
+    "en_Au": "Stopping",
+    "jp": "停止中"
+  },
+  "Wrist Video": {
+    "zh_CN": "腕部视频",
+    "en_Au": "Wrist Video",
+    "jp": "腕部ビデオ"
+  },
+  "Boundary": {
+    "zh_CN": "边界",
+    "en_Au": "Boundary",
+    "jp": "边界"
+  },
+  "Floor Height": {
+    "zh_CN": "地面高度",
+    "en_Au": "Floor Height",
+    "jp": "地面高さ"
+  },
+  "Read user manual on the website": {
+    "zh_CN": "在网站上查看用户手册",
+    "en_Au": "Read user manual on the website",
+    "jp": "ウェブサイトでユーザーマニュアルを読む"
+  },
+  "Download by opening URL on the browser": {
+    "zh_CN": "在浏览器上打开URL下载",
+    "en_Au": "Download by opening URL on the browser",
+    "jp": "ウェブサイトでURLを開き、ダウンロード"
+  },
+  "Previous": {
+    "zh_CN": "上一个",
+    "en_Au": "Previous",
+    "jp": "前へ"
+  },
+  "Next": {
+    "zh_CN": "下一个",
+    "en_Au": "Next",
+    "jp": "次へ"
+  },
+  "Download": {
+    "zh_CN": "下载",
+    "en_Au": "Download",
+    "jp": "ダウンロード"
+  },
+  "Wear in neck": {
+    "zh_CN": "脖带",
+    "en_Au": "Wear in neck",
+    "jp": "首に装着"
+  },
+  "Room": {
+    "zh_CN": "房间",
+    "en_Au": "Room",
+    "jp": "ルーム"
+  },
+  "Collapse": {
+    "zh_CN": "折叠",
+    "en_Au": "Collapse",
+    "jp": "折りたたむ"
+  },
+  "Expand": {
+    "zh_CN": "展开",
+    "en_Au": "Expand",
+    "jp": "展開"
+  },
+  "Succeeded": {
+    "zh_CN": "成功",
+    "en_Au": "Succeeded",
+    "jp": "成功"
+  },
+  "Language": {
+    "zh_CN": "语言",
+    "en_Au": "Language",
+    "jp": "言語"
+  },
+  "Pin/ Unpin the panel": {
+    "zh_CN": "固定 / 取消固定面板",
+    "en_Au": "Pin/ Unpin the panel",
+    "jp": "パネルを固定 / 固定解除"
+  },
+  "Stereo": {
+    "zh_CN": "双目",
+    "en_Au": "Stereo",
+    "jp": "ステレオ"
+  },
+  "Mono": {
+    "zh_CN": "单目",
+    "en_Au": "Mono",
+    "jp": "モノラル"
+  },
+  "Toggle developer panel": {
+    "zh_CN": "切换开发者面板",
+    "en_Au": "Toggle developer panel",
+    "jp": "開発者パネルの切り替え"
+  },
+  "Calibrate": {
+    "zh_CN": "校准",
+    "en_Au": "Calibrate",
+    "jp": "キャリブレーション"
+  },
+  "Set up boundary and floor height": {
+    "zh_CN": "设置边界和地面高度",
+    "en_Au": "Set up boundary and floor height",
+    "jp": "境界と床の高さを設定"
+  },
+  "IPD Adjustment": {
+    "zh_CN": "瞳距调整",
+    "en_Au": "IPD Adjustment",
+    "jp": "IPD调整"
+  },
+  "Stretch": {
+    "zh_CN": "拉伸",
+    "en_Au": "Stretch",
+    "jp": "歪み"
+  },
+  "Suppress Boundary": {
+    "zh_CN": "隐藏边界",
+    "en_Au": "Suppress Boundary",
+    "jp": "境界抑制"
+  }
+}

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f67890123456789abcdef0, type: 3}
+  m_Name: PICO_BoundarySetup
+  action: android.intent.action.MAIN
+  dataUri: 
+  packageName: com.pvr.seethrough.setting
+  className: com.pvr.seethrough.setting.MainActivity
+  flags: 270532608
+  intExtras:
+  - key: intent_extra_type
+    value: 1
+  stringExtras:
+  - key: intent_extra_packagename
+    value: com.picovr.settings

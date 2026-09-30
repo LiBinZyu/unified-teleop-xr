@@ -1,0 +1,10 @@
+{
+  "name": "com.bingru.cyclonedds",
+  "version": "1.0.0",
+  "displayName": "CycloneDDS Plugin",
+  "description": "High-performance native CycloneDDS plugin for Unity, enabling direct zero-copy DDS pub/sub over RTPS/UDP.",
+  "unity": "6000.0",
+  "author": {
+    "name": "Bingru Li"
+  }
+}

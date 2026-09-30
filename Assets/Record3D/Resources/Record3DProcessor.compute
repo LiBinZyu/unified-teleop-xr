@@ -1,0 +1,269 @@
+#pragma kernel K_SplitAndDecode
+#pragma kernel K_FilterAndConfidence
+#pragma kernel K_TemporalFusion
+#pragma kernel K_GenerateMesh
+
+Texture2D<float4> _SourceVideoTex;
+SamplerState sampler_SourceVideoTex;
+
+RWTexture2DArray<float4> _RgbRingArray;
+RWTexture2DArray<float> _DepthRingArray;
+
+struct GPUMeshVertex
+{
+    float4 position; // xyz = position, w = alpha
+    float4 uv;       // xy = uv, zw = 0
+};
+
+RWStructuredBuffer<GPUMeshVertex> _MeshVertexBuffer;
+
+uint _SourceWidth;
+uint _SourceHeight;
+uint _RgbWidth;
+uint _RgbHeight;
+uint _MaxRgbWidth;
+uint _MaxHeight;
+uint _SliceIndex;
+uint _PrevSliceIndex;
+uint _MeshLod;
+float _MinDepth;
+float _MaxDepth;
+float _DepthThreshold;
+float _DitherRange;
+float _Scale;
+float4 _Unprojection; // (ifx, ify, itx, ity)
+int _FlipY;
+
+// Record3D official RGB to Hue conversion (HSV encoded depth)
+// Exact match with Record3D pointcloud-material.js
+float rgb2hue(float3 c)
+{
+    float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+    float4 p = lerp(float4(c.b, c.g, K.w, K.z), float4(c.g, c.b, K.x, K.y), step(c.b, c.g));
+    float4 q = lerp(float4(p.x, p.y, p.w, c.r), float4(c.r, p.y, p.z, p.x), step(p.x, c.r));
+
+    float d = q.x - min(q.w, q.y);
+    float e = 1.0e-10;
+    return abs(q.z + (q.w - q.y) / (6.0 * d + e));
+}
+
+// Kernel 0: Split SBS into RGB and HSV Depth, decode depth to metric float meters
+[numthreads(8, 8, 1)]
+void K_SplitAndDecode(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _RgbWidth || id.y >= _RgbHeight)
+        return;
+
+    uint x = id.x;
+    uint y = id.y;
+    uint sampleY = _FlipY ? (_RgbHeight - 1 - y) : y;
+
+    // Left half = Depth [0, _RgbWidth - 1]
+    // Right half = RGB [_RgbWidth, _SourceWidth - 1]
+    float2 uvDepth = (float2(x, sampleY) + 0.5) / float2(_SourceWidth, _SourceHeight);
+    float2 uvRgb = (float2(x + _RgbWidth, sampleY) + 0.5) / float2(_SourceWidth, _SourceHeight);
+
+    float4 depthSample = _SourceVideoTex.SampleLevel(sampler_SourceVideoTex, uvDepth, 0);
+    float4 rgbSample = _SourceVideoTex.SampleLevel(sampler_SourceVideoTex, uvRgb, 0);
+
+    // Reject dark background / invalid sensor pixels (black has max channel near 0)
+    float maxCh = max(depthSample.r, max(depthSample.g, depthSample.b));
+    float depth = 0.0;
+    if (maxCh > 0.04)
+    {
+        // Decode HSV hue to metric depth (meters)
+        // In Record3D: pixelDepth = 3.0 * hue
+        float hue = rgb2hue(depthSample.rgb);
+        depth = 3.0 * hue;
+
+        // Range filtering (default 0.1m - 2.8m in Record3D)
+        if (depth < _MinDepth || depth >= _MaxDepth)
+        {
+            depth = 0.0;
+        }
+    }
+
+    _DepthRingArray[uint3(x, y, _SliceIndex)] = depth;
+    _RgbRingArray[uint3(x, y, _SliceIndex)] = float4(rgbSample.rgb, 1.0);
+}
+
+// Kernel 1: Exact 8-neighbor (3x3) bilateral filter matching Record3D shouldDiscard()
+[numthreads(8, 8, 1)]
+void K_FilterAndConfidence(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _RgbWidth || id.y >= _RgbHeight)
+        return;
+
+    uint x = id.x;
+    uint y = id.y;
+
+    float centerDepth = _DepthRingArray[uint3(x, y, _SliceIndex)];
+    if (centerDepth < _MinDepth || centerDepth >= _MaxDepth)
+    {
+        _DepthRingArray[uint3(x, y, _SliceIndex)] = 0.0;
+        return;
+    }
+
+    bool discardPoint = false;
+
+    [unroll]
+    for (int i = -1; i <= 1; i++)
+    {
+        [unroll]
+        for (int j = -1; j <= 1; j++)
+        {
+            if (i == 0 && j == 0)
+                continue;
+
+            int nx = clamp((int)x + j, 0, (int)_RgbWidth - 1);
+            int ny = clamp((int)y + i, 0, (int)_RgbHeight - 1);
+            float currDepth = _DepthRingArray[uint3(nx, ny, _SliceIndex)];
+
+            if (currDepth < _MinDepth || currDepth >= _MaxDepth || abs(centerDepth - currDepth) > _DepthThreshold)
+            {
+                discardPoint = true;
+                break;
+            }
+        }
+        if (discardPoint) break;
+    }
+
+    if (discardPoint)
+    {
+        _DepthRingArray[uint3(x, y, _SliceIndex)] = 0.0;
+    }
+}
+
+// Kernel 2: Temporal Fusion across recent ring buffer slices
+[numthreads(8, 8, 1)]
+void K_TemporalFusion(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _RgbWidth || id.y >= _RgbHeight)
+        return;
+
+    uint x = id.x;
+    uint y = id.y;
+
+    float currDepth = _DepthRingArray[uint3(x, y, _SliceIndex)];
+    float prevDepth = _DepthRingArray[uint3(x, y, _PrevSliceIndex)];
+
+    if (currDepth > 0.0 && prevDepth > 0.0 && abs(currDepth - prevDepth) < _DepthThreshold)
+    {
+        _DepthRingArray[uint3(x, y, _SliceIndex)] = currDepth * 0.75 + prevDepth * 0.25;
+    }
+}
+
+// Kernel 3: Generate Stable Mesh once per incoming depth frame
+// Evaluates triangles independently to avoid blocky square holes.
+// Calculates per-vertex alpha gradient directly from the 4 corners (0 extra depth reads!)
+// for silky smooth Bayer screen-door fade.
+[numthreads(8, 8, 1)]
+void K_GenerateMesh(uint3 id : SV_DispatchThreadID)
+{
+    uint qx = id.x;
+    uint qy = id.y;
+
+    uint lod = max(_MeshLod, 1u);
+    uint qWidth = max(1u, (_RgbWidth - 1) / lod);
+    uint qHeight = max(1u, (_RgbHeight - 1) / lod);
+
+    if (qx >= qWidth || qy >= qHeight)
+        return;
+
+    uint quadIndex = qy * qWidth + qx;
+    uint baseVertexIndex = quadIndex * 6;
+
+    uint px = qx * lod;
+    uint py = qy * lod;
+
+    // 4 corners of the quad in image coordinates
+    uint2 c00 = uint2(px, py);
+    uint2 c10 = min(uint2(px + lod, py), uint2(_RgbWidth - 1, _RgbHeight - 1));
+    uint2 c01 = min(uint2(px, py + lod), uint2(_RgbWidth - 1, _RgbHeight - 1));
+    uint2 c11 = min(uint2(px + lod, py + lod), uint2(_RgbWidth - 1, _RgbHeight - 1));
+
+    float d00 = _DepthRingArray[uint3(c00.x, c00.y, _SliceIndex)];
+    float d10 = _DepthRingArray[uint3(c10.x, c10.y, _SliceIndex)];
+    float c01d = _DepthRingArray[uint3(c01.x, c01.y, _SliceIndex)];
+    float d11 = _DepthRingArray[uint3(c11.x, c11.y, _SliceIndex)];
+
+    float hardCut = _DepthThreshold * (1.8 + float(lod) * 0.25);
+    float fadeRange = max(_DitherRange, 0.005);
+
+    // Per-corner smooth alpha gradients calculated directly from the 4 corners (0 extra depth reads!)
+    float a00 = saturate((hardCut - max(abs(d00 - d10), abs(d00 - c01d))) / fadeRange);
+    float a10 = saturate((hardCut - max(abs(d10 - d00), abs(d10 - d11))) / fadeRange);
+    float a01 = saturate((hardCut - max(abs(c01d - d00), abs(c01d - d11))) / fadeRange);
+    float a11 = saturate((hardCut - max(abs(d11 - d10), abs(d11 - c01d))) / fadeRange);
+
+    // Triangle 0: c00, c10, c01 (evaluated independently so bad corner doesn't kill good triangle!)
+    bool tri0Valid = (d00 >= _MinDepth && d00 < _MaxDepth &&
+                      d10 >= _MinDepth && d10 < _MaxDepth &&
+                      c01d >= _MinDepth && c01d < _MaxDepth &&
+                      abs(d00 - d10) <= hardCut &&
+                      abs(d00 - c01d) <= hardCut &&
+                      abs(d10 - c01d) <= hardCut * 1.4);
+
+    // Triangle 1: c10, c11, c01 (evaluated independently)
+    bool tri1Valid = (d10 >= _MinDepth && d10 < _MaxDepth &&
+                      d11 >= _MinDepth && d11 < _MaxDepth &&
+                      c01d >= _MinDepth && c01d < _MaxDepth &&
+                      abs(d10 - d11) <= hardCut &&
+                      abs(c01d - d11) <= hardCut &&
+                      abs(d10 - c01d) <= hardCut * 1.4);
+
+    float4 unproj = _Unprojection;
+    float2 invMaxRes = 1.0 / float2(_MaxRgbWidth, _MaxHeight);
+
+    // Triangle 0 emission
+    if (tri0Valid)
+    {
+        float3 pos0 = float3((unproj.x * float(c00.x) + unproj.z) * d00, -(unproj.y * float(c00.y) + unproj.w) * d00, d00) * _Scale;
+        float3 pos1 = float3((unproj.x * float(c10.x) + unproj.z) * d10, -(unproj.y * float(c10.y) + unproj.w) * d10, d10) * _Scale;
+        float3 pos2 = float3((unproj.x * float(c01.x) + unproj.z) * c01d, -(unproj.y * float(c01.y) + unproj.w) * c01d, c01d) * _Scale;
+
+        _MeshVertexBuffer[baseVertexIndex + 0].position = float4(pos0, a00);
+        _MeshVertexBuffer[baseVertexIndex + 0].uv = float4((float2(c00) + 0.5) * invMaxRes, 0, 0);
+
+        _MeshVertexBuffer[baseVertexIndex + 1].position = float4(pos1, a10);
+        _MeshVertexBuffer[baseVertexIndex + 1].uv = float4((float2(c10) + 0.5) * invMaxRes, 0, 0);
+
+        _MeshVertexBuffer[baseVertexIndex + 2].position = float4(pos2, a01);
+        _MeshVertexBuffer[baseVertexIndex + 2].uv = float4((float2(c01) + 0.5) * invMaxRes, 0, 0);
+    }
+    else
+    {
+        [unroll]
+        for (int i = 0; i < 3; i++)
+        {
+            _MeshVertexBuffer[baseVertexIndex + i].position = float4(0, 0, 0, -1.0);
+            _MeshVertexBuffer[baseVertexIndex + i].uv = float4(0, 0, 0, 0);
+        }
+    }
+
+    // Triangle 1 emission
+    if (tri1Valid)
+    {
+        float3 pos3 = float3((unproj.x * float(c10.x) + unproj.z) * d10, -(unproj.y * float(c10.y) + unproj.w) * d10, d10) * _Scale;
+        float3 pos4 = float3((unproj.x * float(c11.x) + unproj.z) * d11, -(unproj.y * float(c11.y) + unproj.w) * d11, d11) * _Scale;
+        float3 pos5 = float3((unproj.x * float(c01.x) + unproj.z) * c01d, -(unproj.y * float(c01.y) + unproj.w) * c01d, c01d) * _Scale;
+
+        _MeshVertexBuffer[baseVertexIndex + 3].position = float4(pos3, a10);
+        _MeshVertexBuffer[baseVertexIndex + 3].uv = float4((float2(c10) + 0.5) * invMaxRes, 0, 0);
+
+        _MeshVertexBuffer[baseVertexIndex + 4].position = float4(pos4, a11);
+        _MeshVertexBuffer[baseVertexIndex + 4].uv = float4((float2(c11) + 0.5) * invMaxRes, 0, 0);
+
+        _MeshVertexBuffer[baseVertexIndex + 5].position = float4(pos5, a01);
+        _MeshVertexBuffer[baseVertexIndex + 5].uv = float4((float2(c01) + 0.5) * invMaxRes, 0, 0);
+    }
+    else
+    {
+        [unroll]
+        for (int j = 3; j < 6; j++)
+        {
+            _MeshVertexBuffer[baseVertexIndex + j].position = float4(0, 0, 0, -1.0);
+            _MeshVertexBuffer[baseVertexIndex + j].uv = float4(0, 0, 0, 0);
+        }
+    }
+}

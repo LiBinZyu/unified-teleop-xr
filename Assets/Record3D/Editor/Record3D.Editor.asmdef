@@ -1,0 +1,19 @@
+{
+    "name": "Record3D.Editor",
+    "rootNamespace": "Record3D.Editor",
+    "references": [
+        "Record3D",
+        "Unity.WebRTC"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
