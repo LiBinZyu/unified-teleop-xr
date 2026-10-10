@@ -63,3 +63,8 @@ __pycache__/
 # OS generated
 .DS_Store
 Thumbs.db
+
+# CycloneDDS plugin build artifacts
+CycloneDDS/cdds_plugin/build/
+CycloneDDS/cdds_plugin/build_*/
+CycloneDDS/cdds_plugin/cmake-build-*/

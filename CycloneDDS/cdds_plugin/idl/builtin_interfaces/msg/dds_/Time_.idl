@@ -1,0 +1,15 @@
+#ifndef __builtin_interfaces__msg__dds___Time__idl__
+#define __builtin_interfaces__msg__dds___Time__idl__
+
+module builtin_interfaces {
+  module msg {
+    module dds_ {
+      struct Time_ {
+        long sec;
+        unsigned long nanosec;
+      };
+    };
+  };
+};
+
+#endif

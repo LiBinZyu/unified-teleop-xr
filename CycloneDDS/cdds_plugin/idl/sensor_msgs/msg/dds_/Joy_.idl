@@ -1,0 +1,18 @@
+#ifndef __sensor_msgs__msg__dds___Joy__idl__
+#define __sensor_msgs__msg__dds___Joy__idl__
+
+#include "std_msgs/msg/dds_/Header_.idl"
+
+module sensor_msgs {
+  module msg {
+    module dds_ {
+      struct Joy_ {
+        std_msgs::msg::dds_::Header_ header;
+        sequence<float> axes;
+        sequence<long> buttons;
+      };
+    };
+  };
+};
+
+#endif

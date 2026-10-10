@@ -1,0 +1,18 @@
+#ifndef __geometry_msgs__msg__dds___AccelStamped__idl__
+#define __geometry_msgs__msg__dds___AccelStamped__idl__
+
+#include "std_msgs/msg/dds_/Header_.idl"
+#include "geometry_msgs/msg/dds_/Accel_.idl"
+
+module geometry_msgs {
+  module msg {
+    module dds_ {
+      struct AccelStamped_ {
+        std_msgs::msg::dds_::Header_ header;
+        geometry_msgs::msg::dds_::Accel_ accel;
+      };
+    };
+  };
+};
+
+#endif

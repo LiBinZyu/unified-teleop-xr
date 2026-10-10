@@ -1,0 +1,6 @@
+#ifndef __std_msgs__msg__dds___Empty__idl__
+#define __std_msgs__msg__dds___Empty__idl__
+module std_msgs { module msg { module dds_ {
+  struct Empty_ { octet structure_needs_at_least_one_member; };
+}; }; };
+#endif

@@ -473,7 +473,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 3437579434162738385}
-        m_TargetAssemblyTypeName: Apex.Dashboard.SmoothFollower, Assembly-CSharp
+        m_TargetAssemblyTypeName: UTXR.UI.SmoothFollower, Assembly-CSharp
         m_MethodName: set_enabled
         m_Mode: 6
         m_Arguments:
@@ -1390,7 +1390,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 3437579434162738385}
-        m_TargetAssemblyTypeName: Apex.Dashboard.SmoothFollower, Assembly-CSharp
+        m_TargetAssemblyTypeName: UTXR.UI.SmoothFollower, Assembly-CSharp
         m_MethodName: set_enabled
         m_Mode: 6
         m_Arguments:

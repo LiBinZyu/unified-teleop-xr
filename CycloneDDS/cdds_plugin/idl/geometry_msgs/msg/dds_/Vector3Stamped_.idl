@@ -1,0 +1,11 @@
+#ifndef __geometry_msgs__msg__dds___Vector3Stamped__idl__
+#define __geometry_msgs__msg__dds___Vector3Stamped__idl__
+#include "std_msgs/msg/dds_/Header_.idl"
+#include "geometry_msgs/msg/dds_/Vector3_.idl"
+module geometry_msgs { module msg { module dds_ {
+  struct Vector3Stamped_ {
+    std_msgs::msg::dds_::Header_ header;
+    geometry_msgs::msg::dds_::Vector3_ vector;
+  };
+}; }; };
+#endif

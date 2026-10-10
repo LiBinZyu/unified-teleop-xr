@@ -1,0 +1,18 @@
+#ifndef __geometry_msgs__msg__dds___Transform__idl__
+#define __geometry_msgs__msg__dds___Transform__idl__
+
+#include "geometry_msgs/msg/dds_/Vector3_.idl"
+#include "geometry_msgs/msg/dds_/Quaternion_.idl"
+
+module geometry_msgs {
+  module msg {
+    module dds_ {
+      struct Transform_ {
+        geometry_msgs::msg::dds_::Vector3_ translation;
+        geometry_msgs::msg::dds_::Quaternion_ rotation;
+      };
+    };
+  };
+};
+
+#endif

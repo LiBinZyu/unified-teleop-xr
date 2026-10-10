@@ -11,14 +11,14 @@ namespace CycloneDDS.Editor
 {
     /// <summary>
     /// Editor utility to automatically generate or update all DdsInputActionChannel ScriptableObject assets
-    /// directly from Assets/Scripts/XRI Input Actions.inputactions.
+    /// directly from Assets/UTXR/Runtime/Devices/XRI Input Actions.inputactions.
     /// Classified strictly by individual InputAction streams (single binding per channel),
     /// defaulting frameId to "map", and assigning appropriate ROS topics, QoS, and loop modes.
     /// </summary>
     [InitializeOnLoad]
     public static class DdsChannelBatchGenerator
     {
-        public const string InputActionsPath = "Assets/Scripts/XRI Input Actions.inputactions";
+        public const string InputActionsPath = "Assets/UTXR/Runtime/Devices/XRI Input Actions.inputactions";
         public const string BaseChannelsDir = "Assets/CycloneDDS/Samples/Channels";
 
         static DdsChannelBatchGenerator()

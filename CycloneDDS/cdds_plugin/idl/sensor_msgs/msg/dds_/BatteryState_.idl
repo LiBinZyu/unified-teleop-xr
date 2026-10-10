@@ -1,0 +1,31 @@
+#ifndef __sensor_msgs__msg__dds___BatteryState__idl__
+#define __sensor_msgs__msg__dds___BatteryState__idl__
+
+#include "std_msgs/msg/dds_/Header_.idl"
+
+module sensor_msgs {
+  module msg {
+    module dds_ {
+      struct BatteryState_ {
+        std_msgs::msg::dds_::Header_ header;
+        float voltage;
+        float temperature;
+        float current;
+        float charge;
+        float capacity;
+        float design_capacity;
+        float percentage;
+        octet power_supply_status;
+        octet power_supply_health;
+        octet power_supply_technology;
+        boolean present;
+        sequence<float> cell_voltage;
+        sequence<float> cell_temperature;
+        string location;
+        string serial_number;
+      };
+    };
+  };
+};
+
+#endif

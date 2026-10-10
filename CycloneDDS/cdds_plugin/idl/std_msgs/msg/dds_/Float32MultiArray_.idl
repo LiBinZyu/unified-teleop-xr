@@ -1,0 +1,14 @@
+#ifndef __std_msgs__msg__dds___Float32MultiArray__idl__
+#define __std_msgs__msg__dds___Float32MultiArray__idl__
+
+module std_msgs {
+  module msg {
+    module dds_ {
+      struct Float32MultiArray_ {
+        sequence<float> data;
+      };
+    };
+  };
+};
+
+#endif

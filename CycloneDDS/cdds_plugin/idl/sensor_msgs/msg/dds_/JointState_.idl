@@ -1,0 +1,20 @@
+#ifndef __sensor_msgs__msg__dds___JointState__idl__
+#define __sensor_msgs__msg__dds___JointState__idl__
+
+#include "std_msgs/msg/dds_/Header_.idl"
+
+module sensor_msgs {
+  module msg {
+    module dds_ {
+      struct JointState_ {
+        std_msgs::msg::dds_::Header_ header;
+        sequence<string> name;
+        sequence<double> position;
+        sequence<double> velocity;
+        sequence<double> effort;
+      };
+    };
+  };
+};
+
+#endif

@@ -1,0 +1,19 @@
+#ifndef __geometry_msgs__msg__dds___TransformStamped__idl__
+#define __geometry_msgs__msg__dds___TransformStamped__idl__
+
+#include "std_msgs/msg/dds_/Header_.idl"
+#include "geometry_msgs/msg/dds_/Transform_.idl"
+
+module geometry_msgs {
+  module msg {
+    module dds_ {
+      struct TransformStamped_ {
+        std_msgs::msg::dds_::Header_ header;
+        string child_frame_id;
+        geometry_msgs::msg::dds_::Transform_ transform;
+      };
+    };
+  };
+};
+
+#endif

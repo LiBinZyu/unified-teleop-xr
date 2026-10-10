@@ -1,0 +1,11 @@
+#ifndef __geometry_msgs__msg__dds___PointStamped__idl__
+#define __geometry_msgs__msg__dds___PointStamped__idl__
+#include "std_msgs/msg/dds_/Header_.idl"
+#include "geometry_msgs/msg/dds_/Point_.idl"
+module geometry_msgs { module msg { module dds_ {
+  struct PointStamped_ {
+    std_msgs::msg::dds_::Header_ header;
+    geometry_msgs::msg::dds_::Point_ point;
+  };
+}; }; };
+#endif

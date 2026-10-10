@@ -1,0 +1,6 @@
+#ifndef __std_msgs__msg__dds___Byte__idl__
+#define __std_msgs__msg__dds___Byte__idl__
+module std_msgs { module msg { module dds_ {
+  struct Byte_ { octet data; };
+}; }; };
+#endif

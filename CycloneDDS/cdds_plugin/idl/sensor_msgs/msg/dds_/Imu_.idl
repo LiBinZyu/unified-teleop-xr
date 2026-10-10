@@ -1,0 +1,25 @@
+#ifndef __sensor_msgs__msg__dds___Imu__idl__
+#define __sensor_msgs__msg__dds___Imu__idl__
+
+#include "std_msgs/msg/dds_/Header_.idl"
+#include "geometry_msgs/msg/dds_/Quaternion_.idl"
+#include "geometry_msgs/msg/dds_/Vector3_.idl"
+
+module sensor_msgs {
+  module msg {
+    module dds_ {
+      typedef double double__9[9];
+      struct Imu_ {
+        std_msgs::msg::dds_::Header_ header;
+        geometry_msgs::msg::dds_::Quaternion_ orientation;
+        double__9 orientation_covariance;
+        geometry_msgs::msg::dds_::Vector3_ angular_velocity;
+        double__9 angular_velocity_covariance;
+        geometry_msgs::msg::dds_::Vector3_ linear_acceleration;
+        double__9 linear_acceleration_covariance;
+      };
+    };
+  };
+};
+
+#endif

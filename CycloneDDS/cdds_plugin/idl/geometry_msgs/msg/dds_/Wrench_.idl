@@ -1,0 +1,17 @@
+#ifndef __geometry_msgs__msg__dds___Wrench__idl__
+#define __geometry_msgs__msg__dds___Wrench__idl__
+
+#include "geometry_msgs/msg/dds_/Vector3_.idl"
+
+module geometry_msgs {
+  module msg {
+    module dds_ {
+      struct Wrench_ {
+        geometry_msgs::msg::dds_::Vector3_ force;
+        geometry_msgs::msg::dds_::Vector3_ torque;
+      };
+    };
+  };
+};
+
+#endif

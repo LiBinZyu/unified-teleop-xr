@@ -2967,7 +2967,7 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls:
         - m_Target: {fileID: 4060343997619628938}
-          m_TargetAssemblyTypeName: InputActionTrigger, Assembly-CSharp
+          m_TargetAssemblyTypeName: UTXR.Devices.InputActionTrigger, Assembly-CSharp
           m_MethodName: ToggleGameObjectActive
           m_Mode: 2
           m_Arguments:

@@ -1,0 +1,18 @@
+#ifndef __geometry_msgs__msg__dds___Pose__idl__
+#define __geometry_msgs__msg__dds___Pose__idl__
+
+#include "geometry_msgs/msg/dds_/Point_.idl"
+#include "geometry_msgs/msg/dds_/Quaternion_.idl"
+
+module geometry_msgs {
+  module msg {
+    module dds_ {
+      struct Pose_ {
+        geometry_msgs::msg::dds_::Point_ position;
+        geometry_msgs::msg::dds_::Quaternion_ orientation;
+      };
+    };
+  };
+};
+
+#endif

@@ -1,0 +1,6 @@
+#ifndef __std_msgs__msg__dds___Char__idl__
+#define __std_msgs__msg__dds___Char__idl__
+module std_msgs { module msg { module dds_ {
+  struct Char_ { octet data; };
+}; }; };
+#endif
