@@ -82,6 +82,27 @@ namespace Record3D
         public Record3DAutoProbe AutoProbe => _pipeline?.AutoProbe;
 
         // Settings Properties
+        [SerializeField] private string _interfaceId = "";
+        public string InterfaceId
+        {
+            get => _interfaceId;
+            set
+            {
+                if (_interfaceId != value)
+                {
+                    _interfaceId = value;
+                    _pipeline?.UpdateNetworkBinding(_deviceIp, _interfaceId);
+                }
+            }
+        }
+
+        public void SetTargetNetwork(string targetIp, string interfaceId)
+        {
+            _deviceIp = targetIp;
+            _interfaceId = interfaceId;
+            _pipeline?.UpdateNetworkBinding(_deviceIp, _interfaceId);
+        }
+
         public string DeviceIp { get => _deviceIp; set { _deviceIp = value; _pipeline?.UpdateDeviceAddress(); } }
         public int DevicePort { get => _devicePort; set { _devicePort = value; _pipeline?.UpdateDeviceAddress(); } }
         public string DeviceAddress => _devicePort == 80 || _devicePort <= 0 ? _deviceIp : $"{_deviceIp}:{_devicePort}";

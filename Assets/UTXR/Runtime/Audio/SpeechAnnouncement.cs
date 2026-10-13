@@ -1,4 +1,4 @@
-﻿using UTXR.Core;
+using UTXR.Core;
 using Logger = UTXR.Core.Logger;
 using UTXR.UI.Localization;
 using System;
@@ -45,7 +45,7 @@ namespace UTXR.Audio
             InitializeChannel();
         }
 
-        private const string PREF_LANGUAGE = "Apex_Language";
+        private const string PREF_LANGUAGE = UILanguageManager.PREF_KEY_LANGUAGE;
 
         private void OnEnable()
         {

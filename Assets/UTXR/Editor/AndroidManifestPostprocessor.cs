@@ -1,8 +1,9 @@
-﻿using UTXR.Core;
+using UTXR.Core;
 namespace UTXR.Editor
 {
     #if UNITY_EDITOR
     using UnityEditor.Android;
+    using System.Collections.Generic;
     using System.IO;
     using System.Xml;
     using UnityEngine;
@@ -37,29 +38,38 @@ namespace UTXR.Editor
                 androidNs = "http://schemas.android.com/apk/res/android";
             }
     
-            bool hasPermission = false;
+            string[] requiredPermissions = {
+                "android.permission.ACCESS_WIFI_STATE",
+                "android.permission.ACCESS_FINE_LOCATION",
+                "android.permission.ACCESS_COARSE_LOCATION"
+            };
+
+            bool modified = false;
             XmlNodeList permissions = manifestNode.SelectNodes("uses-permission");
+            HashSet<string> existingPermissions = new HashSet<string>();
             
             if (permissions != null)
             {
                 foreach (XmlElement permission in permissions)
                 {
-                    if (permission.GetAttribute("name", androidNs) == "android.permission.ACCESS_WIFI_STATE")
+                    string name = permission.GetAttribute("name", androidNs);
+                    if (!string.IsNullOrEmpty(name))
                     {
-                        hasPermission = true;
-                        break;
+                        existingPermissions.Add(name);
                     }
                 }
             }
     
-            bool modified = false;
-            if (!hasPermission)
+            foreach (string perm in requiredPermissions)
             {
-                XmlElement newElement = xmlDoc.CreateElement("uses-permission");
-                newElement.SetAttribute("name", androidNs, "android.permission.ACCESS_WIFI_STATE");
-                manifestNode.AppendChild(newElement);
-                modified = true;
-                Debug.Log("[WiFiPermissionInjector] ACCESS_WIFI_STATE injected successfully.");
+                if (!existingPermissions.Contains(perm))
+                {
+                    XmlElement newElement = xmlDoc.CreateElement("uses-permission");
+                    newElement.SetAttribute("name", androidNs, perm);
+                    manifestNode.AppendChild(newElement);
+                    modified = true;
+                    Debug.Log($"[WiFiPermissionInjector] {perm} injected successfully.");
+                }
             }
     
             XmlNode applicationNode = xmlDoc.SelectSingleNode("/manifest/application");

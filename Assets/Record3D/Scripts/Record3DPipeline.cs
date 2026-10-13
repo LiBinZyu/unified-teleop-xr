@@ -246,6 +246,23 @@ namespace Record3D
             }
         }
 
+        public void UpdateNetworkBinding(string deviceIp, string interfaceId)
+        {
+            if (_webrtcReceiver is Record3DWebRTCReceiver receiver)
+            {
+                receiver.SetNetworkBinding(_manager.DeviceAddress, interfaceId);
+            }
+            else if (_webrtcReceiver != null)
+            {
+                _webrtcReceiver.DeviceAddress = _manager.DeviceAddress;
+            }
+
+            if (_isPipelineRunning && IsConnected)
+            {
+                Reconnect();
+            }
+        }
+
         public void Tick()
         {
             _fpsCounter++;

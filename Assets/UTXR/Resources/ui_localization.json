@@ -29,6 +29,11 @@
     "en_Au": " Setting",
     "jp": "設定"
   },
+  " Settings": {
+    "zh_CN": "设置",
+    "en_Au": " Settings",
+    "jp": "設定"
+  },
   "Please enter": {
     "zh_CN": "请输入",
     "en_Au": "Please enter",
@@ -43,21 +48,6 @@
     "zh_CN": "IP 地址",
     "en_Au": "IP address",
     "jp": "IPアドレス"
-  },
-  "Please charge your device to avoid system disconnection and unexpected errors.": {
-    "zh_CN": "请为您的设备充电，以避免系统断线及发生未知错误。",
-    "en_Au": "Please charge your device to avoid system disconnection and unexpected errors.",
-    "jp": "システムの切断や予期せぬエラーを防ぐため、デバイスを充電してください。"
-  },
-  "Turn on and setup motion tracker to access to all features.": {
-    "zh_CN": "请点击打开配置体感追踪以使用完整功能。",
-    "en_Au": "Turn on and setup motion tracker to access to all features.",
-    "jp": "すべての機能を利用するには、モーショントラッカーを起動してセットアップしてください。"
-  },
-  "Calibrating, Please stretch the arms.": {
-    "zh_CN": "握紧手柄，将双臂在前方呈V字型完全伸展。",
-    "en_Au": "Calibrating, Please stretch the arms.",
-    "jp": "キャリブレーション中、腕を伸ばしてください。"
   },
   "Teleoperation": {
     "zh_CN": "遥操作",
@@ -98,16 +88,6 @@
     "zh_CN": "体感追踪",
     "en_Au": "Motion Tracking",
     "jp": "モーショントラッキング"
-  },
-  "For optimal performance, please turn off Wifi and connect via cable.": {
-    "zh_CN": "请关闭 Wifi，并使用有线网络，以确保最佳体验。",
-    "en_Au": "For optimal performance, please turn off Wifi and connect via cable.",
-    "jp": "最適なパフォーマンスを得るため、Wi-Fiをオフにしてケーブルで接続してください。"
-  },
-  "Please close this panel to prevent frame drops and ensure teleoperation data quality.": {
-    "zh_CN": "请关闭此面板以防止丢帧并确保遥操作数据质量。",
-    "en_Au": "Please close this panel to prevent frame drops and ensure teleoperation data quality.",
-    "jp": "フレーム落ちを防ぎ遠隔操作データの品質を保つため、このパネルを閉じることを推奨します。"
   },
   "End-effector": {
     "zh_CN": "机械臂末端",
@@ -184,7 +164,7 @@
     "en_Au": "Receive",
     "jp": "受信"
   },
-  "WebRTC": {
+  "Spatial Video": {
     "zh_CN": "空间视频",
     "en_Au": "Spatial Video",
     "jp": "空間ビデオ"

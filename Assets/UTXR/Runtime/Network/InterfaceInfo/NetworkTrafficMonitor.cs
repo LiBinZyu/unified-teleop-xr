@@ -65,6 +65,9 @@ namespace Network.InterfaceInfo
         /// <summary>
         /// Formats given throughput values into display strings according to format rules.
         /// </summary>
+        public static string FormatValue(double mbps, TrafficUnitFormat format) =>
+            FormatValue(mbps, mbps * 125_000.0, format);
+
         public static string FormatValue(double mbps, double bytesPerSec, TrafficUnitFormat format)
         {
             switch (format)
@@ -95,7 +98,7 @@ namespace Network.InterfaceInfo
                 default:
                 {
                     double m = Math.Max(0.0, mbps);
-                    return $"{m:F1} MBPS";
+                    return $"{m:F2} Mbps";
                 }
             }
         }
@@ -113,16 +116,10 @@ namespace Network.InterfaceInfo
             txBytes = 0;
 
 #if UNITY_ANDROID && !UNITY_EDITOR
-            // 1. Android sysfs statistics
+            // API 31+: authoritative *per-interface* counters; never substitute device totals.
+            if (TryReadAndroidInterfaceStats(ifaceName, out rxBytes, out txBytes)) return true;
             if (TryReadSysfs(ifaceName, out rxBytes, out txBytes)) return true;
-
-            // 2. Android /proc/net/dev kernel table
             if (TryReadProcNetDev(ifaceName, out rxBytes, out txBytes)) return true;
-
-            // 3. Fallback to Android TrafficStats total
-            if (TryReadAndroidTrafficStats(out rxBytes, out txBytes)) return true;
-
-            // 4. Fallback to standard .NET
             if (TryReadDotNet(ifaceName, ifaceId, out rxBytes, out txBytes)) return true;
 #elif UNITY_STANDALONE_LINUX && !UNITY_EDITOR
             if (TryReadSysfs(ifaceName, out rxBytes, out txBytes)) return true;
@@ -168,7 +165,7 @@ namespace Network.InterfaceInfo
                     }
                 }
 
-                if (matchedNic == null)
+                if (matchedNic == null && string.IsNullOrEmpty(ifaceName) && string.IsNullOrEmpty(ifaceId))
                 {
                     for (int i = 0; i < nics.Length; i++)
                     {
@@ -189,14 +186,14 @@ namespace Network.InterfaceInfo
                         var stats = matchedNic.GetIPStatistics();
                         rxBytes = stats.BytesReceived;
                         txBytes = stats.BytesSent;
-                        return true;
+                        return rxBytes >= 0 && txBytes >= 0;
                     }
                     catch
                     {
                         var stats4 = matchedNic.GetIPv4Statistics();
                         rxBytes = stats4.BytesReceived;
                         txBytes = stats4.BytesSent;
-                        return true;
+                        return rxBytes >= 0 && txBytes >= 0;
                     }
                 }
             }
@@ -271,25 +268,24 @@ namespace Network.InterfaceInfo
         }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
-        private static bool TryReadAndroidTrafficStats(out long rxBytes, out long txBytes)
+        private static bool TryReadAndroidInterfaceStats(string ifaceName, out long rxBytes, out long txBytes)
         {
             rxBytes = 0;
             txBytes = 0;
+            if (string.IsNullOrEmpty(ifaceName) || UnityEngine.AndroidJNI.AttachCurrentThread() != 0)
+                return false;
             try
             {
-                using var trafficStats = new UnityEngine.AndroidJavaClass("android.net.TrafficStats");
-                long rx = trafficStats.CallStatic<long>("getTotalRxBytes");
-                long tx = trafficStats.CallStatic<long>("getTotalTxBytes");
-                if (rx >= 0 && tx >= 0)
-                {
-                    rxBytes = rx;
-                    txBytes = tx;
-                    return true;
-                }
+                using var version = new UnityEngine.AndroidJavaClass("android.os.Build$VERSION");
+                if (version.GetStatic<int>("SDK_INT") < 31) return false;
+                using var stats = new UnityEngine.AndroidJavaClass("android.net.TrafficStats");
+                rxBytes = stats.CallStatic<long>("getRxBytes", ifaceName);
+                txBytes = stats.CallStatic<long>("getTxBytes", ifaceName);
+                return rxBytes >= 0 && txBytes >= 0;
             }
-            catch { }
-            return false;
+            catch { return false; }
         }
+
 #endif
 
         #endregion
@@ -328,6 +324,7 @@ namespace Network.InterfaceInfo
             {
                 if (!TryReadBytes(interfaceName, interfaceId, out long currentRx, out long currentTx))
                 {
+                    _hasSample = false;
                     RxMbps = 0.0;
                     TxMbps = 0.0;
                     RxBytesPerSec = 0.0;

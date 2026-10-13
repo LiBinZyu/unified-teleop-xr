@@ -23,7 +23,7 @@ namespace Network.InterfaceInfo
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.LogWarning($"[LinuxNetworkEnricher] Linux enrichment error: {ex.Message}");
+                NetworkLogger.LogWarning($"[Network] Linux enrichment failed: {ex.Message}");
             }
 #endif
         }

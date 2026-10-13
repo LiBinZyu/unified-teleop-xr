@@ -181,7 +181,7 @@ namespace Network.InterfaceInfo
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.LogWarning($"[WindowsNetworkEnricher] WLAN query error: {ex.Message}");
+                NetworkLogger.LogWarning($"[Network] Windows WLAN query failed: {ex.Message}");
             }
             finally
             {

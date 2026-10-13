@@ -4,7 +4,10 @@
     "references": [
         "Unity.WebRTC",
         "Unity.InputSystem",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "UTXR.Prefs",
+        "UTXR.Network"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

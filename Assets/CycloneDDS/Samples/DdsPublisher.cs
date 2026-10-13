@@ -27,6 +27,9 @@ namespace CycloneDDS
         [Tooltip("Direct DDS traffic to bind strictly to the matching local network interface (does NOT affect Wi-Fi or other apps)")]
         public bool bindMatchingInterface = true;
 
+        [Tooltip("Explicit network adapter ID to lock DDS binding. If empty, auto-detects from target IP.")]
+        public string interfaceId = "";
+
         [Tooltip("Allow UDP multicast discovery (Default true)")]
         public bool allowMulticast = true;
 
@@ -43,6 +46,13 @@ namespace CycloneDDS
 
         [Tooltip("Interval in seconds to check for matched subscribers on active channels (default 0.5s)")]
         public float subscriberCheckInterval = 0.5f;
+
+        [Header("Timeout & Connection Monitoring")]
+        [Tooltip("Timeout in seconds when waiting for subscriber match before reporting timeout warning")]
+        public float subscriberTimeoutSeconds = 5.0f;
+        public event Action<string> OnConnectionTimeout;
+        private float _subscriberWaitTimer = 0f;
+        private bool _hasFiredTimeout = false;
 
         [Tooltip("List of DdsInputActionChannel assets. Each asset represents a single InputAction stream.")]
         public List<DdsInputActionChannel> channels = new List<DdsInputActionChannel>();
@@ -220,8 +230,29 @@ namespace CycloneDDS
         {
             if (isInitialized) return;
 
+            // Ensure previous native background teardown is finished before re-initializing
+            if (_backgroundShutdownTask != null && !_backgroundShutdownTask.IsCompleted)
+            {
+                DdsLog.Info("Waiting for previous CycloneDDS background shutdown to complete...");
+                _backgroundShutdownTask.Wait(300);
+                if (!_backgroundShutdownTask.IsCompleted)
+                {
+                    DdsLog.Warning("Previous CycloneDDS background shutdown still running; aborting re-init to prevent crash.");
+                    return;
+                }
+            }
+
             SyncLogging();
-            string config = DdsConfig.BuildCycloneDdsXml(targetIp, bindMatchingInterface, allowMulticast, autodetermine);
+            string localIp = null;
+            if (!string.IsNullOrEmpty(interfaceId))
+            {
+                localIp = Network.InterfaceInfo.NetworkInfoService.GetIpv4ForInterface(interfaceId);
+            }
+
+            string config = !string.IsNullOrEmpty(localIp)
+                ? DdsConfig.BuildCycloneDdsXml(localIp, new[] { targetIp }, bindMatchingInterface, allowMulticast, autodetermine)
+                : DdsConfig.BuildCycloneDdsXml(targetIp, bindMatchingInterface, allowMulticast, autodetermine);
+
             int rc = CddsNative.cdds_init(domainId, config);
             if (rc != 0)
             {
@@ -322,6 +353,23 @@ namespace CycloneDDS
                     _subscriberCheckTimer = 0f;
                     RefreshMatchedSubscribers();
                 }
+
+                // Subscriber connection timeout monitoring
+                if (hasMatchedSubscribers)
+                {
+                    _subscriberWaitTimer = 0f;
+                    _hasFiredTimeout = false;
+                }
+                else if (!string.IsNullOrWhiteSpace(targetIp))
+                {
+                    _subscriberWaitTimer += Time.unscaledDeltaTime;
+                    if (_subscriberWaitTimer >= subscriberTimeoutSeconds && !_hasFiredTimeout)
+                    {
+                        _hasFiredTimeout = true;
+                        DdsLog.Warning($"[CycloneDDS Timeout] No subscriber matched at target '{targetIp}' (Interface: '{interfaceId}') after {subscriberTimeoutSeconds:F1}s.");
+                        OnConnectionTimeout?.Invoke(targetIp);
+                    }
+                }
             }
 
             // Main-thread safe dispatch of network polling results to Unity UI
@@ -383,19 +431,39 @@ namespace CycloneDDS
         }
 
         /// <summary>
+        /// Switches target IP and/or network interface ID, restarting DDS if initialized.
+        /// </summary>
+        public void SwitchTarget(string newTargetIp, string newInterfaceId = null)
+        {
+            string trimmedIp = newTargetIp?.Trim() ?? "";
+            string trimmedId = newInterfaceId?.Trim() ?? "";
+
+            bool sameIp = string.Equals(targetIp, trimmedIp, StringComparison.OrdinalIgnoreCase);
+            bool sameId = string.Equals(interfaceId, trimmedId, StringComparison.OrdinalIgnoreCase);
+            if (sameIp && sameId && isInitialized) return;
+
+            targetIp = trimmedIp;
+            interfaceId = trimmedId;
+            _subscriberWaitTimer = 0f;
+            _hasFiredTimeout = false;
+
+            if (isInitialized)
+            {
+                Shutdown();
+                if (_backgroundShutdownTask != null && !_backgroundShutdownTask.IsCompleted)
+                {
+                    _backgroundShutdownTask.Wait(300);
+                }
+                InitializeDds();
+            }
+        }
+
+        /// <summary>
         /// Switches target IP and restarts DDS if currently initialized.
         /// </summary>
         public void SwitchTargetIp(string newTargetIp)
         {
-            string trimmed = newTargetIp?.Trim() ?? "";
-            if (targetIp == trimmed && isInitialized) return;
-
-            targetIp = trimmed;
-            if (isInitialized)
-            {
-                Shutdown();
-                InitializeDds();
-            }
+            SwitchTarget(newTargetIp, interfaceId);
         }
 
         /// <summary>
@@ -431,9 +499,15 @@ namespace CycloneDDS
 
         public void StopNetworkPolling()
         {
-            _netPollCts?.Cancel();
-            _netPollCts?.Dispose();
-            _netPollCts = null;
+            if (_netPollCts != null)
+            {
+                try
+                {
+                    _netPollCts.Cancel();
+                }
+                catch { }
+                _netPollCts = null;
+            }
         }
 
         public void ForceDiscoveredIps(List<string> ips)
@@ -485,8 +559,12 @@ namespace CycloneDDS
 
         #endregion
 
+        private static readonly object _shutdownLock = new object();
+        private static Task _backgroundShutdownTask = Task.CompletedTask;
+
         public void Shutdown()
         {
+            // 1. Immediately detach from Unity render pipeline on main thread (0 ms, zero frame stutter)
             if (_isHooked)
             {
                 Application.onBeforeRender -= OnBeforeRender;
@@ -516,8 +594,26 @@ namespace CycloneDDS
                 }
             }
 
-            CddsNative.cdds_shutdown();
-            DdsLog.Info("CycloneDDS Shutdown complete");
+            // 2. Offload blocking CddsNative.cdds_shutdown to background thread so main thread NEVER stalls.
+            // When a network interface goes down (e.g. Wi-Fi turned off), native dds_delete can block indefinitely
+            // waiting for socket threads. Executing it on a background thread ensures the Unity VR rendering and UI
+            // never freeze.
+            lock (_shutdownLock)
+            {
+                _backgroundShutdownTask = Task.Run(() =>
+                {
+                    try
+                    {
+                        DdsLog.Info("CycloneDDS native shutdown starting in background...");
+                        CddsNative.cdds_shutdown();
+                        DdsLog.Info("CycloneDDS Shutdown complete");
+                    }
+                    catch (Exception ex)
+                    {
+                        DdsLog.Warning($"CycloneDDS native shutdown error: {ex.Message}");
+                    }
+                });
+            }
         }
     }
 }

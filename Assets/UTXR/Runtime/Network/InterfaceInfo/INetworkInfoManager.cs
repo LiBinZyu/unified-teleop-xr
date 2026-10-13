@@ -58,16 +58,6 @@ namespace Network.InterfaceInfo
         void RequestRefresh();
 
         /// <summary>
-        /// Begins listening for OS network topology changes (e.g. Wi-Fi disconnect/reconnect).
-        /// </summary>
-        void StartWatching();
-
-        /// <summary>
-        /// Stops listening for OS network topology changes.
-        /// </summary>
-        void StopWatching();
-
-        /// <summary>
         /// Event dispatched whenever the active snapshot is updated with a new version.
         /// </summary>
         event Action<int> OnInterfacesChanged;

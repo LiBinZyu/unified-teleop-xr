@@ -80,8 +80,6 @@ namespace Network.InterfaceInfo
         public readonly bool IsDefaultRoute;
         public readonly long LinkSpeedMbps;          // PHY/hardware link speed in Mbps (-1 if unavailable)
         public readonly long EstimatedBandwidthMbps;  // OS downstream throughput estimation (-1 if unavailable)
-        public readonly double RxMbps;               // Live measured receive throughput in Mbps (-1 if unavailable)
-        public readonly double TxMbps;               // Live measured send throughput in Mbps (-1 if unavailable)
         public readonly int AddressStartIndex;       // Start index in the snapshot's contiguous address table
         public readonly int AddressCount;            // Number of assigned IP addresses
 
@@ -100,8 +98,6 @@ namespace Network.InterfaceInfo
             bool isDefaultRoute,
             long linkSpeedMbps,
             long estimatedBandwidthMbps,
-            double rxMbps,
-            double txMbps,
             int addressStartIndex,
             int addressCount)
         {
@@ -114,8 +110,6 @@ namespace Network.InterfaceInfo
             IsDefaultRoute = isDefaultRoute;
             LinkSpeedMbps = linkSpeedMbps;
             EstimatedBandwidthMbps = estimatedBandwidthMbps;
-            RxMbps = rxMbps;
-            TxMbps = txMbps;
             AddressStartIndex = addressStartIndex;
             AddressCount = addressCount;
         }
@@ -123,9 +117,7 @@ namespace Network.InterfaceInfo
         public override string ToString()
         {
             string speed = LinkSpeedMbps > 0 ? $"{LinkSpeedMbps} Mbps" : "N/A";
-            string rx = RxMbps >= 0 ? $"{RxMbps:F1} Mbps" : "N/A";
-            string tx = TxMbps >= 0 ? $"{TxMbps:F1} Mbps" : "N/A";
-            return $"[{Type}] {DisplayName} ({Name}) - Status: {Status}, DefaultRoute: {IsDefaultRoute}, LinkSpeed: {speed}, RX: {rx}, TX: {tx}, Addrs: {AddressCount}";
+            return $"[{Type}] {DisplayName} ({Name}) - Status: {Status}, DefaultRoute: {IsDefaultRoute}, LinkSpeed: {speed}, Addrs: {AddressCount}";
         }
     }
 
@@ -204,8 +196,6 @@ namespace Network.InterfaceInfo
         public bool IsDefaultRoute;
         public long LinkSpeedMbps;
         public long EstimatedBandwidthMbps;
-        public double RxMbps;
-        public double TxMbps;
         public int AddressStartIndex;
         public int AddressCount;
         public int PriorityScore;

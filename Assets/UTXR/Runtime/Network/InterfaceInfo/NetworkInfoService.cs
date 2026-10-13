@@ -1,12 +1,12 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Network.InterfaceInfo
 {
     /// <summary>
     /// Unity MonoBehaviour service hosting the standardized NetworkInfoManager.
-    /// Manages Unity lifecycle, Inspector configuration, and dispatches
-    /// network change events safely to the Unity main thread.
+    /// Polls the network topology and dispatches snapshot updates on the Unity main thread.
     /// </summary>
     [DisallowMultipleComponent]
     public class NetworkInfoService : MonoBehaviour
@@ -21,11 +21,8 @@ namespace Network.InterfaceInfo
         [SerializeField] private int maxAddresses = NetworkInfoManager.DefaultMaxAddresses;
 
         [Header("Lifecycle & Monitoring")]
-        [Tooltip("Automatically register for OS network change events (reactive, event-driven).")]
-        [SerializeField] private bool autoStartWatching = true;
-
-        [Tooltip("Optional background polling interval in seconds. 0 = disabled (recommended, purely reactive).")]
-        [SerializeField] private float pollInterval = 0f;
+        [Tooltip("Network topology refresh interval (seconds). Values <= 0 in old scenes use 5 seconds.")]
+        [SerializeField] private float pollInterval = 5f;
 
         [Header("Traffic Monitoring Configuration")]
         [Tooltip("Master switch to enable or disable real-time RX/TX network traffic throughput monitoring.")]
@@ -37,9 +34,20 @@ namespace Network.InterfaceInfo
         [Tooltip("Display format for traffic throughput text (Mbps, AutoBytes, AutoBits).")]
         [SerializeField] private TrafficUnitFormat trafficFormat = TrafficUnitFormat.Mbps;
 
+        [Header("Logging Configuration")]
+        [Tooltip("Master switch to enable or disable Unity console Debug.Log output for the network module.")]
+        [SerializeField] private bool enableDebugLog = true;
+
+        [Tooltip("Master switch to enable or disable persistent file logging (UTXR.Core.Logger) for the network module.")]
+        [SerializeField] private bool enableFileLog = true;
+
         private NetworkInfoManager _manager;
         private volatile int _pendingDispatchedVersion = -1;
         private float _lastPollTime;
+        private float _lastTrafficTime;
+        private volatile bool _refreshRequested;
+        private readonly Dictionary<string, NetworkTrafficMonitor.Sampler> _trafficSamplers =
+            new Dictionary<string, NetworkTrafficMonitor.Sampler>(StringComparer.Ordinal);
 
         /// <summary>
         /// Global switch state indicating whether RX/TX traffic monitoring is currently enabled.
@@ -109,8 +117,17 @@ namespace Network.InterfaceInfo
                 return;
             }
 
+            NetworkLogger.EnableDebugLog = enableDebugLog;
+            NetworkLogger.EnableFileLog = enableFileLog;
             NetworkTrafficMonitor.SetEnabled(enableTrafficMonitor);
+            NetworkTrafficMonitor.OnMonitoringToggled += HandleMonitoringToggled;
             InitializeManager();
+        }
+
+        private void OnValidate()
+        {
+            NetworkLogger.EnableDebugLog = enableDebugLog;
+            NetworkLogger.EnableFileLog = enableFileLog;
         }
 
         private void InitializeManager()
@@ -122,16 +139,21 @@ namespace Network.InterfaceInfo
 
             _manager.RefreshNow();
 
-            if (autoStartWatching)
-            {
-                _manager.StartWatching();
-            }
-
+            // Unity keeps Inspector values serialized: migrate the former event-only (0s) setting.
+            if (pollInterval <= 0f) pollInterval = 5f;
             _lastPollTime = Time.realtimeSinceStartup;
+            _lastTrafficTime = Time.realtimeSinceStartup - Mathf.Max(0.05f, trafficUpdateInterval);
         }
 
         private void Update()
         {
+            if (_refreshRequested)
+            {
+                _refreshRequested = false;
+                RefreshNow();
+                _lastPollTime = Time.realtimeSinceStartup;
+            }
+
             int pending = _pendingDispatchedVersion;
             if (pending > 0)
             {
@@ -142,8 +164,14 @@ namespace Network.InterfaceInfo
                 }
                 catch (Exception ex)
                 {
-                    UnityEngine.Debug.LogWarning($"[NetworkInfoService] OnInterfacesChanged handler threw: {ex.Message}");
+                    NetworkLogger.LogWarning($"[Network] OnInterfacesChanged handler threw: {ex.Message}");
                 }
+            }
+
+            if (NetworkTrafficMonitor.IsEnabled && Time.realtimeSinceStartup - _lastTrafficTime >= Mathf.Max(0.05f, trafficUpdateInterval))
+            {
+                _lastTrafficTime = Time.realtimeSinceStartup;
+                SampleTraffic();
             }
 
             if (pollInterval > 0f)
@@ -152,7 +180,9 @@ namespace Network.InterfaceInfo
                 if (now - _lastPollTime >= pollInterval)
                 {
                     _lastPollTime = now;
-                    RequestRefresh();
+                    // Poll on Unity main thread: Android Wi-Fi JNI stays on the attached Unity thread.
+                    // Typical refresh is a few ms and happens only once per poll interval.
+                    RefreshNow();
                 }
             }
         }
@@ -162,8 +192,66 @@ namespace Network.InterfaceInfo
             _pendingDispatchedVersion = version;
         }
 
+        // Keep samplers across topology polls; restarting every snapshot prevents usable deltas.
+        private void SampleTraffic()
+        {
+            var snapshot = CurrentSnapshot;
+            for (int i = 0; i < snapshot.InterfaceCount; i++)
+            {
+                var iface = snapshot.Interfaces[i];
+                // Allow valid IP interfaces even if Android reports an unreliable status.
+                if (iface.IsLoopback || iface.AddressCount == 0 ||
+                    string.IsNullOrEmpty(iface.Name) ||
+                    (iface.IsVirtual && string.IsNullOrEmpty(snapshot.GetPrimaryIPv4(i)))) continue;
+                if (!_trafficSamplers.TryGetValue(iface.Name, out var sampler))
+                {
+                    sampler = new NetworkTrafficMonitor.Sampler();
+                    _trafficSamplers.Add(iface.Name, sampler);
+                }
+                sampler.UpdateSample(iface.Name, iface.Id);
+            }
+        }
+
+        /// <summary>Live per-interface traffic, separate from the topology snapshot.
+        /// False means not sampled/unsupported; zero is a valid measured rate.</summary>
+        public bool TryGetTraffic(string interfaceIdOrName, out double rxMbps, out double txMbps)
+        {
+            rxMbps = -1;
+            txMbps = -1;
+            if (!NetworkTrafficMonitor.IsEnabled || string.IsNullOrEmpty(interfaceIdOrName)) return false;
+
+            var snapshot = CurrentSnapshot;
+            for (int i = 0; i < snapshot.InterfaceCount; i++)
+            {
+                var iface = snapshot.Interfaces[i];
+                if (!string.Equals(iface.Id, interfaceIdOrName, StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(iface.Name, interfaceIdOrName, StringComparison.OrdinalIgnoreCase)) continue;
+                if (!_trafficSamplers.TryGetValue(iface.Name, out var sampler) || !sampler.HasSample) return false;
+                rxMbps = sampler.RxMbps;
+                txMbps = sampler.TxMbps;
+                return true;
+            }
+            return false;
+        }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        // Refresh on the next Update after resuming, on Unity's main thread.
+        private void OnApplicationPause(bool paused)
+        {
+            if (!paused && _manager != null) RequestRefresh();
+        }
+#endif
+
+        private void HandleMonitoringToggled(bool enabled)
+        {
+            if (!enabled) _trafficSamplers.Clear();
+            else _lastTrafficTime = Time.realtimeSinceStartup - Mathf.Max(0.05f, trafficUpdateInterval);
+        }
+
         private void OnDestroy()
         {
+            NetworkTrafficMonitor.OnMonitoringToggled -= HandleMonitoringToggled;
+            _trafficSamplers.Clear();
             if (_manager != null)
             {
                 _manager.OnInterfacesChanged -= HandleManagerInterfacesChanged;
@@ -178,9 +266,8 @@ namespace Network.InterfaceInfo
         }
 
         /// <summary>
-        /// Triggers an immediate synchronous system refresh and dispatches change events.
+        /// Triggers an immediate synchronous system refresh.
         /// </summary>
-        /// []
         public bool RefreshNow()
         {
             if (_manager == null) InitializeManager();
@@ -188,13 +275,12 @@ namespace Network.InterfaceInfo
         }
 
         /// <summary>
-        /// Requests an asynchronous background system refresh.
+        /// Requests a refresh on the next Unity Update; safe for Android JNI calls.
         /// </summary>
         [ContextMenu("Request Refresh")]
         public void RequestRefresh()
         {
-            if (_manager == null) InitializeManager();
-            _manager.RequestRefresh();
+            _refreshRequested = true;
         }
 
         #region Traffic Monitoring Controls
@@ -235,6 +321,93 @@ namespace Network.InterfaceInfo
         public void ToggleTrafficMonitor()
         {
             NetworkTrafficMonitor.Toggle();
+        }
+
+        #endregion
+
+        [ContextMenu("Debug Network Interfaces")]
+        public void DebugNetworkInterfaces()
+        {
+            var snapshot = CurrentSnapshot;
+            var diagnostics = Diagnostics;
+            NetworkLogger.Log($"[Network] {diagnostics} | LastError: {diagnostics.LastErrorMessage} | " +
+                      $"ServiceActive={isActiveAndEnabled} TrafficEnabled={NetworkTrafficMonitor.IsEnabled} " +
+                      $"Poll={pollInterval:F1}s SampleInterval={trafficUpdateInterval:F1}s Samplers={_trafficSamplers.Count}");
+            for (int i = 0; i < snapshot.InterfaceCount; i++)
+            {
+                if (!snapshot.TryGetInterface(i, out var nic)) continue;
+                bool ok = TryGetTraffic(nic.Id, out double rx, out double tx);
+                bool hasSampler = _trafficSamplers.TryGetValue(nic.Name, out var sampler);
+                string traffic = ok ? $"RX={rx:F3} TX={tx:F3} Mbps" : "N/A";
+                bool rawOk = NetworkTrafficMonitor.TryReadBytes(nic.Name, nic.Id, out long rawRx, out long rawTx);
+                NetworkLogger.Log($"[Network] #{i} {nic.Name} ({nic.Type}) IP={snapshot.GetPrimaryIPv4(i)} " +
+                          $"Addresses={nic.AddressCount} | SamplerExists={hasSampler} " +
+                          $"HasSample={(hasSampler && sampler.HasSample)} | Traffic={traffic} " +
+                          $"| RawCounter={(rawOk ? $"{rawRx}/{rawTx}" : "unsupported")}");
+            }
+        }
+
+        #region Subnet Matching & Interface Lookup API
+
+        /// <summary>
+        /// Finds the network interface matching the target IP's subnet.
+        /// (LocalIP & SubnetMask) == (TargetIP & SubnetMask), prioritizing physical interfaces.
+        /// </summary>
+        public static bool FindInterfaceBySubnet(string targetIp, out NetworkInterfaceInfo info, out string localIpv4)
+        {
+            var snapshot = GetSnapshotSafe();
+            return snapshot.TryFindInterfaceBySubnet(targetIp, out _, out info, out localIpv4);
+        }
+
+        /// <summary>
+        /// Resolves the IPv4 address for an interface identified by unique Id, Name, or DisplayName.
+        /// </summary>
+        public static string GetIpv4ForInterface(string interfaceId)
+        {
+            var snapshot = GetSnapshotSafe();
+            if (snapshot.TryFindInterfaceById(interfaceId, out _, out _, out string localIpv4))
+            {
+                return localIpv4;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Returns the active network snapshot safely, generating an on-demand snapshot if the service instance is not yet initialized.
+        /// </summary>
+        public static NetworkSnapshot GetSnapshotSafe()
+        {
+            if (Instance != null && Instance.CurrentSnapshot != null && Instance.CurrentSnapshot.InterfaceCount > 0)
+            {
+                return Instance.CurrentSnapshot;
+            }
+            var tempMgr = new NetworkInfoManager(32, 128);
+            tempMgr.RefreshNow();
+            return tempMgr.CurrentSnapshot;
+        }
+
+        /// <summary>
+        /// Retrieves all operational, non-loopback network interfaces and their primary IPv4 addresses.
+        /// Pure data list completely decoupled from any UI framework.
+        /// </summary>
+        public static List<(NetworkInterfaceInfo Info, string LocalIp)> GetActiveInterfaces()
+        {
+            var snapshot = GetSnapshotSafe();
+            var list = new List<(NetworkInterfaceInfo, string)>();
+            for (int i = 0; i < snapshot.InterfaceCount; i++)
+            {
+                var iface = snapshot.Interfaces[i];
+                if (iface.IsLoopback || !iface.IsUp ||
+                    (iface.IsVirtual && iface.Name.StartsWith("dummy", StringComparison.Ordinal))) continue;
+                string ip = snapshot.GetPrimaryIPv4(i);
+                if (!string.IsNullOrEmpty(ip) &&
+                    System.Net.IPAddress.TryParse(ip, out var address) &&
+                    !System.Net.IPAddress.IsLoopback(address))
+                {
+                    list.Add((iface, ip));
+                }
+            }
+            return list;
         }
 
         #endregion

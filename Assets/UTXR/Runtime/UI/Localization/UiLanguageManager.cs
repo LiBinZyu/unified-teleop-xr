@@ -1,10 +1,10 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using UTXR.Audio;
-
+using UTXR.Prefs;
 using UTXR.Core;
 using Logger = UTXR.Core.Logger;
 namespace UTXR.UI.Localization
@@ -12,6 +12,7 @@ namespace UTXR.UI.Localization
     [RequireComponent(typeof(UiLocalization))]
     public class UILanguageManager : MonoBehaviour
     {
+        public const string PREF_KEY_LANGUAGE = "UTXR_Language";
         private const string TAG = "[UILanguageManager]";
         public static UILanguageManager Instance { get; private set; }
         
@@ -47,8 +48,7 @@ namespace UTXR.UI.Localization
             if (CurrentLanguage != newLang)
             {
                 CurrentLanguage = newLang;
-                PlayerPrefs.SetInt("Apex_Language", (int)newLang);
-                PlayerPrefs.Save();
+                PlayerPrefsManager.SetEnum(PREF_KEY_LANGUAGE, newLang);
                 Logger.LogApp($"{TAG} Language updated to: {CurrentLanguage}");
                 OnLanguageChanged?.Invoke();
             }
@@ -71,8 +71,7 @@ namespace UTXR.UI.Localization
     
         public void SyncLanguageFromPref()
         {
-            int langInt = PlayerPrefs.GetInt("Apex_Language", (int)LanguageType.en_Au); 
-            LanguageType prefLanguage = (LanguageType)langInt;
+            LanguageType prefLanguage = PlayerPrefsManager.GetEnum(PREF_KEY_LANGUAGE, LanguageType.en_Au); 
     
             if (CurrentLanguage != prefLanguage)
             {

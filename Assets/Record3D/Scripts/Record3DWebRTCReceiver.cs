@@ -52,6 +52,18 @@ namespace Record3D
             set => _deviceAddress = value;
         }
 
+        private string _boundInterfaceId = "";
+        private string _boundLocalIp = null;
+
+        public void SetNetworkBinding(string deviceAddress, string interfaceId)
+        {
+            _deviceAddress = deviceAddress;
+            _boundInterfaceId = interfaceId;
+            _boundLocalIp = !string.IsNullOrEmpty(interfaceId)
+                ? Network.InterfaceInfo.NetworkInfoService.GetIpv4ForInterface(interfaceId)
+                : null;
+        }
+
         public Record3DWebRTCReceiver(MonoBehaviour host, string deviceAddress = "192.168.0.194")
         {
             _coroutineHost = host;
@@ -366,18 +378,20 @@ namespace Record3D
                 yield return null;
             }
 
-            // Send local Answer to Record3D
+            // Send local Answer to Record3D (filtering candidates to bound local IP if specified)
             string finalAnswerSdp = _peerConnection.LocalDescription.sdp;
+            if (!string.IsNullOrEmpty(_boundLocalIp))
+            {
+                finalAnswerSdp = FilterCandidates(finalAnswerSdp, _boundLocalIp);
+            }
+
             Record3DLogger.WebRTC($"Answer video codecs: {DescribeVideoCodecs(finalAnswerSdp)}");
             yield return signaling.SendAnswer(
                 finalAnswerSdp,
                 () =>
                 {
                     if (!IsSessionCurrent(session)) return;
-                    Record3DLogger.WebRTC("Handshake complete: Answer accepted by device! Live stream active.");
-                    _isConnected = true;
-                    _isConnecting = false;
-                    _connectCoroutine = null;
+                    Record3DLogger.WebRTC("Handshake complete: Answer accepted by device! Awaiting ICE media connection...");
                 },
                 err =>
                 {
@@ -387,6 +401,51 @@ namespace Record3D
                     _connectCoroutine = null;
                 }
             );
+
+            // Wait for ICE connection or stream establishment with timeout (6.0s)
+            float connectTimeout = 6.0f;
+            float connectTimer = 0f;
+            while (!_isConnected && connectTimer < connectTimeout)
+            {
+                if (!IsSessionCurrent(session)) yield break;
+                connectTimer += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            if (!_isConnected)
+            {
+                Record3DLogger.WebRTC($"[Record3D Timeout] Connection to {_deviceAddress} via {_boundInterfaceId} ({_boundLocalIp ?? "Auto"}) timed out after {connectTimeout:F1}s.", Record3DLogLevel.Error);
+                _isConnecting = false;
+                _connectCoroutine = null;
+                StopReceiving();
+                yield break;
+            }
+
+            _isConnecting = false;
+            _connectCoroutine = null;
+        }
+
+        private static string FilterCandidates(string sdp, string localIp)
+        {
+            if (string.IsNullOrEmpty(sdp) || string.IsNullOrEmpty(localIp)) return sdp;
+
+            var sb = new StringBuilder();
+            using var reader = new System.IO.StringReader(sdp);
+            string line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (line.StartsWith("a=candidate:", StringComparison.OrdinalIgnoreCase))
+                {
+                    // If host candidate, only keep candidates containing the designated local IP
+                    if (line.IndexOf("typ host", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                        !line.Contains(localIp))
+                    {
+                        continue;
+                    }
+                }
+                sb.AppendLine(line);
+            }
+            return sb.ToString();
         }
 
         private void HandleVideoReceived(int session, VideoStreamTrack track, Texture tex)

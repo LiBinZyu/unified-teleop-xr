@@ -36,12 +36,76 @@ namespace UTXR.UI
         [Tooltip("TMP text displaying separate TX throughput (optional)")]
         public TextMeshProUGUI txTrafficText;
 
+        // Diagnostics: which real interface this row represents (independent of UI label text).
+        public string BoundInterfaceId => _currentInterfaceId;
+        private bool _localBindingsChecked;
+        private bool _localBindingsValid;
 
-        private readonly NetworkTrafficMonitor.Sampler _trafficTracker = new NetworkTrafficMonitor.Sampler();
+        // Clone-time only: Unity does not remap references to objects OUTSIDE the cloned prefab.
+        // Repair by exact child object name if possible; never write to a shared external label.
+        public bool EnsureLocalBindings()
+        {
+            if (_localBindingsChecked) return _localBindingsValid;
+            _localBindingsChecked = true;
+            displayNameText = OwnChild(displayNameText, nameof(displayNameText));
+            ipAddressText = OwnChild(ipAddressText, nameof(ipAddressText));
+            linkSpeedText = OwnChild(linkSpeedText, nameof(linkSpeedText));
+            rxTrafficText = OwnChild(rxTrafficText, nameof(rxTrafficText));
+            txTrafficText = OwnChild(txTrafficText, nameof(txTrafficText));
+            typeImage = OwnChild(typeImage, nameof(typeImage));
+            linkSpeedImage = OwnChild(linkSpeedImage, nameof(linkSpeedImage));
+
+            // Adopted scene rows can have old cached strings after references are fixed.
+            _cachedDisplayName = _cachedIp = _cachedLinkSpeed = _cachedRx = _cachedTx = null;
+            _cachedTypeSprite = _cachedSpeedSprite = null;
+            if (displayNameText == null || ipAddressText == null)
+            {
+                UTXR.Core.Logger.LogApp($"[NetworkItemView] '{name}': row requires its OWN DisplayName and IP TMP children. " +
+                               "Fix template Inspector references; refusing to render a misleading row.", LogType.Error);
+                _localBindingsValid = false;
+                return false;
+            }
+            if (rxTrafficText == null || txTrafficText == null)
+                UTXR.Core.Logger.LogApp($"[NetworkItemView] '{name}': RX/TX TMP children not bound. " +
+                                 "Assign the two text children on the networkItem TEMPLATE, not on a parent or sibling.", LogType.Warning);
+            _localBindingsValid = true;
+            return true;
+        }
+
+        private T OwnChild<T>(T current, string field) where T : Component
+        {
+            if (current == null) return null;
+            if (current.transform == transform || current.transform.IsChildOf(transform)) return current;
+
+            T found = null;
+            foreach (var child in GetComponentsInChildren<T>(true))
+            {
+                if (child.name != current.name) continue;
+                if (found != null) { found = null; break; } // Ambiguous: do not guess.
+                found = child;
+            }
+            if (found != null)
+            {
+                UTXR.Core.Logger.LogApp($"[NetworkItemView] '{name}' repaired external '{field}' " +
+                                 $"reference by exact child name '{found.name}'. Fix the template Inspector.", LogType.Warning);
+                return found;
+            }
+            UTXR.Core.Logger.LogApp($"[NetworkItemView] '{name}' field '{field}' references " +
+                           $"'{current.name}' OUTSIDE this row and no unique child match exists. " +
+                           "Clearing unsafe reference; bind a local child in the template Inspector.", LogType.Error);
+            return null;
+        }
+
+        public bool OwnsDisplayText => displayNameText != null &&
+            (displayNameText.transform == transform || displayNameText.transform.IsChildOf(transform));
+        public bool OwnsRxText => rxTrafficText != null &&
+            (rxTrafficText.transform == transform || rxTrafficText.transform.IsChildOf(transform));
+        public bool OwnsTxText => txTrafficText != null &&
+            (txTrafficText.transform == transform || txTrafficText.transform.IsChildOf(transform));
+
         private string _currentInterfaceName;
         private string _currentInterfaceId;
         private bool _isInterfaceUp;
-        private float _lastTrafficUpdateTime;
 
         private string _cachedDisplayName;
         private string _cachedIp;
@@ -54,7 +118,7 @@ namespace UTXR.UI
         /// <summary>
         /// Zero-GC update of UI elements directly from the NetworkInterfaceInfo struct and snapshot.
         /// </summary>
-        public void Bind(in NetworkInterfaceInfo info, NetworkSnapshot snapshot, NetworkInfoUI uiContext)
+        public void Bind(in NetworkInterfaceInfo info, NetworkSnapshot snapshot, NetworkInfoUI uiContext, bool preferIPv6 = false)
         {
             // 1. Type Icon (uses offlineIcon if status is down)
             if (typeImage != null && uiContext != null)
@@ -88,22 +152,20 @@ namespace UTXR.UI
                 string targetIp = "N/A";
                 if (snapshot != null && info.AddressCount > 0)
                 {
-                    // Find first IPv4 address
-                    for (int a = 0; a < info.AddressCount; a++)
-                    {
-                        if (snapshot.TryGetAddress(info.AddressStartIndex + a, out var addr) && addr.IsIPv4)
-                        {
-                            targetIp = addr.Address;
-                            break;
-                        }
-                    }
+                    bool excludeIpv4 = uiContext != null && uiContext.FilterIPv4;
+                    bool excludeIpv6 = uiContext != null && uiContext.FilterIPv6;
 
-                    // Fallback to IPv6 if no IPv4
-                    if (targetIp == "N/A")
+                    // Show the requested address family first; never turn addresses into extra rows.
+                    for (int pass = 0; pass < 2 && targetIp == "N/A"; pass++)
                     {
+                        bool ipv6 = pass == 0 ? preferIPv6 : !preferIPv6;
+                        if (ipv6 && excludeIpv6) continue;
+                        if (!ipv6 && excludeIpv4) continue;
+
                         for (int a = 0; a < info.AddressCount; a++)
                         {
-                            if (snapshot.TryGetAddress(info.AddressStartIndex + a, out var addr) && addr.IsIPv6)
+                            if (!snapshot.TryGetAddress(info.AddressStartIndex + a, out var addr)) continue;
+                            if (ipv6 ? addr.IsIPv6 : addr.IsIPv4)
                             {
                                 targetIp = addr.Address;
                                 break;
@@ -146,16 +208,22 @@ namespace UTXR.UI
                 }
             }
 
-            // 6. Traffic text initialization (independent real-time monitoring)
+            // 6. Live traffic is separate from the topology snapshot.
             _currentInterfaceName = info.Name;
             _currentInterfaceId = info.Id;
-            _isInterfaceUp = (info.Status == NetworkStatus.Up);
+            _isInterfaceUp = (info.IsUp || info.AddressCount > 0) && !info.IsLoopback;
 
             if (_isInterfaceUp && NetworkTrafficMonitor.IsEnabled)
             {
                 TrafficUnitFormat format = uiContext != null ? uiContext.TrafficFormat : TrafficUnitFormat.Mbps;
-                string initialRx = NetworkTrafficMonitor.FormatValue(0.0, 0.0, format);
-                string initialTx = NetworkTrafficMonitor.FormatValue(0.0, 0.0, format);
+                var service = uiContext != null ? uiContext.NetworkService : NetworkInfoService.Instance;
+
+                string queryKey = !string.IsNullOrEmpty(_currentInterfaceId) ? _currentInterfaceId : _currentInterfaceName;
+                double rxMbps = -1, txMbps = -1;
+                bool available = service != null && !string.IsNullOrEmpty(queryKey) &&
+                                 service.TryGetTraffic(queryKey, out rxMbps, out txMbps);
+                string initialRx = available ? NetworkTrafficMonitor.FormatValue(rxMbps, format) : "N/A";
+                string initialTx = available ? NetworkTrafficMonitor.FormatValue(txMbps, format) : "N/A";
 
                 if (rxTrafficText != null)
                 {
@@ -168,23 +236,10 @@ namespace UTXR.UI
                     txTrafficText.text = initialTx;
                     _cachedTx = initialTx;
                 }
-
-                _trafficTracker.Reset();
-                _trafficTracker.UpdateSample(_currentInterfaceName, _currentInterfaceId);
-                _lastTrafficUpdateTime = Time.realtimeSinceStartup;
             }
             else
             {
-                if (rxTrafficText != null)
-                {
-                    rxTrafficText.text = string.Empty;
-                    _cachedRx = string.Empty;
-                }
-                if (txTrafficText != null)
-                {
-                    txTrafficText.text = string.Empty;
-                    _cachedTx = string.Empty;
-                }
+                ClearTraffic();
             }
         }
 
@@ -193,24 +248,35 @@ namespace UTXR.UI
         /// </summary>
         public void UpdateTraffic(TrafficUnitFormat format = TrafficUnitFormat.Mbps)
         {
-            if (!_isInterfaceUp || (rxTrafficText == null && txTrafficText == null))
-                return;
+            UpdateTraffic(null, format);
+        }
 
-            _trafficTracker.UpdateSample(_currentInterfaceName, _currentInterfaceId);
+        /// <summary>
+        /// Updates displayed RX and TX traffic throughput using live telemetry from NetworkInfoService.
+        /// </summary>
+        public void UpdateTraffic(NetworkInfoService service, TrafficUnitFormat format = TrafficUnitFormat.Mbps)
+        {
+            if (!_isInterfaceUp || (rxTrafficText == null && txTrafficText == null)) return;
+
+            var netService = service != null ? service : NetworkInfoService.Instance;
+            string queryKey = !string.IsNullOrEmpty(_currentInterfaceId) ? _currentInterfaceId : _currentInterfaceName;
+            double rxMbps = -1, txMbps = -1;
+            bool available = NetworkTrafficMonitor.IsEnabled && netService != null &&
+                             !string.IsNullOrEmpty(queryKey) &&
+                             netService.TryGetTraffic(queryKey, out rxMbps, out txMbps);
 
             if (rxTrafficText != null)
             {
-                string targetRx = _trafficTracker.GetFormattedRx(format);
+                string targetRx = available ? NetworkTrafficMonitor.FormatValue(rxMbps, format) : "N/A";
                 if (_cachedRx != targetRx)
                 {
                     rxTrafficText.text = targetRx;
                     _cachedRx = targetRx;
                 }
             }
-
             if (txTrafficText != null)
             {
-                string targetTx = _trafficTracker.GetFormattedTx(format);
+                string targetTx = available ? NetworkTrafficMonitor.FormatValue(txMbps, format) : "N/A";
                 if (_cachedTx != targetTx)
                 {
                     txTrafficText.text = targetTx;
@@ -220,11 +286,10 @@ namespace UTXR.UI
         }
 
         /// <summary>
-        /// Clears traffic text displays and resets tracking baseline.
+        /// Clears traffic text displays.
         /// </summary>
         public void ClearTraffic()
         {
-            _trafficTracker.Reset();
             if (rxTrafficText != null) rxTrafficText.text = string.Empty;
             if (txTrafficText != null) txTrafficText.text = string.Empty;
             _cachedRx = string.Empty;
@@ -233,7 +298,8 @@ namespace UTXR.UI
 
         private void OnDisable()
         {
-            _trafficTracker.Reset();
+            _cachedRx = null;
+            _cachedTx = null;
         }
 
         /// <summary>
@@ -244,13 +310,11 @@ namespace UTXR.UI
             _currentInterfaceName = null;
             _currentInterfaceId = null;
             _isInterfaceUp = false;
-            _trafficTracker.Reset();
 
             if (displayNameText != null) displayNameText.text = string.Empty;
             if (ipAddressText != null) ipAddressText.text = string.Empty;
             if (linkSpeedText != null) linkSpeedText.text = string.Empty;
-            if (rxTrafficText != null) rxTrafficText.text = string.Empty;
-            if (txTrafficText != null) txTrafficText.text = string.Empty;
+            ClearTraffic();
             if (typeImage != null) typeImage.enabled = false;
             if (linkSpeedImage != null) linkSpeedImage.enabled = false;
 

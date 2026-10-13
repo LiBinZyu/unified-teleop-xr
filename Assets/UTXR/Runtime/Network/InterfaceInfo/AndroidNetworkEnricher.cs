@@ -12,11 +12,23 @@ namespace Network.InterfaceInfo
     /// </summary>
     internal static class AndroidNetworkEnricher
     {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        private static bool _permissionRequested;
+#endif
+
         public static void Enrich(RawInterfaceData[] rawInterfaces, int count)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
             if (rawInterfaces == null || count <= 0) return;
 
+            if (!_permissionRequested && !System.Threading.Thread.CurrentThread.IsThreadPoolThread)
+            {
+                _permissionRequested = true;
+                AndroidWifiSsidPermission.RequestLocationPermissions();
+            }
+
+            bool workerThread = System.Threading.Thread.CurrentThread.IsThreadPoolThread;
+            if (workerThread && AndroidJNI.AttachCurrentThread() != 0) return;
             try
             {
                 using var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
@@ -40,9 +52,9 @@ namespace Network.InterfaceInfo
                         defaultIfaceName = activeLp.Call<string>("getInterfaceName");
                     }
                 }
-
                 if (!string.IsNullOrEmpty(defaultIfaceName))
                 {
+                    NetworkLogger.Log($"[Network] Default route interface: '{defaultIfaceName}'");
                     for (int i = 0; i < count; i++)
                     {
                         if (string.Equals(rawInterfaces[i].Name, defaultIfaceName, StringComparison.OrdinalIgnoreCase))
@@ -81,14 +93,14 @@ namespace Network.InterfaceInfo
                                     }
                                 }
 
-                                if (matchIdx < 0) continue;
-
                                 // Transports: 0=Cellular, 1=WiFi, 2=Bluetooth, 3=Ethernet, 4=VPN
                                 bool isWifi = caps.Call<bool>("hasTransport", 1);
                                 bool isEthernet = caps.Call<bool>("hasTransport", 3);
                                 bool isCellular = caps.Call<bool>("hasTransport", 0);
                                 bool isVpn = caps.Call<bool>("hasTransport", 4);
                                 bool isBluetooth = caps.Call<bool>("hasTransport", 2);
+
+                                if (matchIdx < 0) continue;
 
                                 if (isWifi) rawInterfaces[matchIdx].Type = NetworkType.WiFi;
                                 else if (isEthernet) rawInterfaces[matchIdx].Type = NetworkType.Ethernet;
@@ -126,7 +138,11 @@ namespace Network.InterfaceInfo
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.LogWarning($"[AndroidNetworkEnricher] Android enrichment error: {ex.Message}");
+                NetworkLogger.LogWarning($"[Network] Android enrichment failed: {ex.Message}");
+            }
+            finally
+            {
+                if (workerThread) AndroidJNI.DetachCurrentThread();
             }
 #endif
         }
@@ -158,8 +174,12 @@ namespace Network.InterfaceInfo
                 {
                     iface.LinkSpeedMbps = linkSpeed;
                 }
+                NetworkLogger.Log($"[Network] Wi-Fi '{iface.Name}': SSID='{iface.Ssid}', Speed={iface.LinkSpeedMbps}Mbps");
             }
-            catch { }
+            catch (Exception ex)
+            {
+                NetworkLogger.LogWarning($"[Network] Wi-Fi enrichment failed: {ex.Message}");
+            }
         }
 
         private static long ReadSysfsSpeed(string ifaceName)

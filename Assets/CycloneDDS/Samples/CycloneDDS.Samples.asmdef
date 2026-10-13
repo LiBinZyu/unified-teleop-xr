@@ -5,7 +5,9 @@
         "CycloneDDS.Runtime",
         "Unity.InputSystem",
         "Unity.TextMeshPro",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "UTXR.Prefs",
+        "UTXR.Network"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

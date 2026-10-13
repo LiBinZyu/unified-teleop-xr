@@ -36,11 +36,7 @@ namespace Network.InterfaceInfo
 
         // Concurrency controls
         private readonly object _refreshLock = new object();
-        private readonly object _watcherLock = new object();
-        private readonly object _debounceLock = new object();
-        private Timer _debounceTimer;
-        private volatile bool _isRefreshing;
-        private volatile bool _isWatching;
+        private int _refreshPending;
         private volatile bool _isDisposed;
 
         // Diagnostics tracking
@@ -150,90 +146,21 @@ namespace Network.InterfaceInfo
 
         public void RequestRefresh()
         {
-            if (_isDisposed || _isRefreshing) return;
-
+            if (_isDisposed || Interlocked.Exchange(ref _refreshPending, 1) != 0) return;
             ThreadPool.QueueUserWorkItem(_ =>
             {
-                if (_isDisposed) return;
-                lock (_refreshLock)
-                {
-                    if (_isDisposed) return;
-                    _isRefreshing = true;
-                    try
-                    {
-                        PerformRefreshInternal();
-                    }
-                    finally
-                    {
-                        _isRefreshing = false;
-                    }
-                }
-            });
-        }
-
-        public void StartWatching()
-        {
-            if (_isWatching || _isDisposed) return;
-
-            lock (_watcherLock)
-            {
-                if (_isWatching || _isDisposed) return;
                 try
                 {
-                    NetworkChange.NetworkAddressChanged += HandleNetworkTopologyChanged;
-                    NetworkChange.NetworkAvailabilityChanged += HandleNetworkAvailabilityChanged;
-                    _isWatching = true;
+                    lock (_refreshLock)
+                    {
+                        if (!_isDisposed) PerformRefreshInternal();
+                    }
                 }
-                catch (Exception ex)
-                {
-                    RecordError($"Failed to register NetworkChange events: {ex.Message}");
-                }
-            }
-        }
-
-        public void StopWatching()
-        {
-            if (!_isWatching) return;
-
-            lock (_watcherLock)
-            {
-                if (!_isWatching) return;
-                try
-                {
-                    NetworkChange.NetworkAddressChanged -= HandleNetworkTopologyChanged;
-                    NetworkChange.NetworkAvailabilityChanged -= HandleNetworkAvailabilityChanged;
-                }
-                catch { }
                 finally
                 {
-                    _isWatching = false;
+                    Interlocked.Exchange(ref _refreshPending, 0);
                 }
-            }
-        }
-
-        private void HandleNetworkTopologyChanged(object sender, EventArgs e)
-        {
-            ScheduleDebouncedRefresh();
-        }
-
-        private void HandleNetworkAvailabilityChanged(object sender, NetworkAvailabilityEventArgs e)
-        {
-            ScheduleDebouncedRefresh();
-        }
-
-        private void ScheduleDebouncedRefresh()
-        {
-            if (_isDisposed) return;
-
-            lock (_debounceLock)
-            {
-                if (_isDisposed) return;
-                _debounceTimer?.Dispose();
-                _debounceTimer = new Timer(_ =>
-                {
-                    RequestRefresh();
-                }, null, 250, Timeout.Infinite);
-            }
+            });
         }
 
         private bool PerformRefreshInternal()
@@ -271,6 +198,7 @@ namespace Network.InterfaceInfo
             }
 
             int scratchAddrIndex = 0;
+            NetworkLogger.Log($"[Network] Enumerated {nicsCount} network interfaces.");
 
             // 1. Base interface enumeration
             for (int i = 0; i < nicsCount; i++)
@@ -332,7 +260,13 @@ namespace Network.InterfaceInfo
 
                 _scratchRawInterfaces[i] = new RawInterfaceData
                 {
+#if UNITY_ANDROID && !UNITY_EDITOR
+                    // Android's managed enumerator may expose the same kernel NIC more than once.
+                    // Linux interface name is the stable identity; managed Id is not authoritative.
+                    Id = !string.IsNullOrEmpty(nic.Name) ? nic.Name : (nic.Id ?? string.Empty),
+#else
                     Id = nic.Id ?? string.Empty,
+#endif
                     Name = nic.Name ?? string.Empty,
                     DisplayName = displayName ?? string.Empty,
                     Ssid = string.Empty,
@@ -341,12 +275,12 @@ namespace Network.InterfaceInfo
                     IsDefaultRoute = false,
                     LinkSpeedMbps = speedMbps,
                     EstimatedBandwidthMbps = -1,
-                    RxMbps = -1.0,
-                    TxMbps = -1.0,
                     AddressStartIndex = startAddrIdx,
                     AddressCount = addrCount,
                     PriorityScore = 0
                 };
+
+                NetworkLogger.Log($"[Network] Found iface [{nic.Name}]: Type={_scratchRawInterfaces[i].Type}, Status={_scratchRawInterfaces[i].Status}");
             }
 
             // 2. Platform-specific enrichment (Windows WLAN/DefaultRoute, Android XR, Linux sysfs)
@@ -355,7 +289,17 @@ namespace Network.InterfaceInfo
             LinuxNetworkEnricher.Enrich(_scratchRawInterfaces, nicsCount);
             EnrichDefaultGatewayFallback(_scratchRawInterfaces, nicsCount, nics);
 
-            // 3. Compute priority scores for user interface sorting
+            // 3. Android: one logical NIC per kernel interface name, with union of its addresses.
+#if UNITY_ANDROID && !UNITY_EDITOR
+            int preMergeCount = nicsCount;
+            nicsCount = MergeAndroidDuplicates(nicsCount);
+            if (preMergeCount != nicsCount)
+            {
+                NetworkLogger.Log($"[Network] Merged duplicate interfaces: {preMergeCount} -> {nicsCount}");
+            }
+#endif
+
+            // 4. Compute priority scores for user interface sorting
             for (int i = 0; i < nicsCount; i++)
             {
                 _scratchRawInterfaces[i].PriorityScore = ComputePriorityScore(ref _scratchRawInterfaces[i]);
@@ -392,8 +336,6 @@ namespace Network.InterfaceInfo
                     raw.IsDefaultRoute,
                     raw.LinkSpeedMbps,
                     raw.EstimatedBandwidthMbps,
-                    raw.RxMbps,
-                    raw.TxMbps,
                     targetAddrStart,
                     raw.AddressCount
                 );
@@ -423,6 +365,16 @@ namespace Network.InterfaceInfo
             stopwatch.Stop();
             _lastRefreshDurationMs = stopwatch.ElapsedMilliseconds;
 
+            string defaultName = (defaultInterfaceIndex >= 0 && defaultInterfaceIndex < nicsCount) ? targetInterfaces[defaultInterfaceIndex].Name : "none";
+            NetworkLogger.Log($"[Network] Snapshot v{newVersion}: {nicsCount} interfaces (default='{defaultName}')");
+            for (int i = 0; i < nicsCount; i++)
+            {
+                ref readonly var info = ref targetInterfaces[i];
+                string primaryIp = info.AddressCount > 0 ? targetAddresses[info.AddressStartIndex].Address : "no-ip";
+                string ssidInfo = !string.IsNullOrEmpty(info.Ssid) ? $", SSID='{info.Ssid}'" : "";
+                NetworkLogger.Log($"[Network]   [{info.Name}] {info.Type} {info.Status} IP={primaryIp}{ssidInfo}");
+            }
+
             // Notify subscribers
             try
             {
@@ -430,11 +382,106 @@ namespace Network.InterfaceInfo
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.LogWarning($"[NetworkInfoManager] OnInterfacesChanged handler threw: {ex.Message}");
+                NetworkLogger.LogWarning($"[Network] OnInterfacesChanged handler threw: {ex.Message}");
             }
 
             return true;
         }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        // Cold path only. Uses the inactive address buffer for compaction, so no extra allocation.
+        private int MergeAndroidDuplicates(int count)
+        {
+            var mergedAddresses = _activeBufferIndex == 0 ? _addressesBuffer1 : _addressesBuffer0;
+            int uniqueCount = 0;
+            int addressCount = 0;
+
+            for (int i = 0; i < count; i++)
+            {
+                var raw = _scratchRawInterfaces[i];
+                int found = -1;
+                if (!string.IsNullOrEmpty(raw.Name))
+                {
+                    for (int j = 0; j < uniqueCount; j++)
+                    {
+                        if (string.Equals(_scratchRawInterfaces[j].Name, raw.Name, StringComparison.Ordinal))
+                        {
+                            found = j;
+                            break;
+                        }
+                    }
+                }
+
+                if (found < 0)
+                {
+                    found = uniqueCount++;
+                    var compact = raw;
+                    compact.AddressStartIndex = addressCount;
+                    compact.AddressCount = 0;
+                    _scratchRawInterfaces[found] = compact;
+                }
+                else
+                {
+                    var compact = _scratchRawInterfaces[found];
+                    compact.IsDefaultRoute |= raw.IsDefaultRoute;
+                    if (raw.Status == NetworkStatus.Up) compact.Status = NetworkStatus.Up;
+                    if (string.IsNullOrEmpty(compact.Ssid) && !string.IsNullOrEmpty(raw.Ssid))
+                    {
+                        compact.Ssid = raw.Ssid;
+                        compact.DisplayName = raw.DisplayName;
+                    }
+                    if (compact.LinkSpeedMbps <= 0) compact.LinkSpeedMbps = raw.LinkSpeedMbps;
+                    _scratchRawInterfaces[found] = compact;
+                }
+
+                // Preserve distinct IPv4/IPv6 addresses across all reported copies.
+                for (int a = 0; a < raw.AddressCount; a++)
+                {
+                    var candidate = _scratchAddresses[raw.AddressStartIndex + a];
+                    var compact = _scratchRawInterfaces[found];
+                    int existing = -1;
+                    for (int k = 0; k < compact.AddressCount; k++)
+                    {
+                        int idx = compact.AddressStartIndex + k;
+                        if (mergedAddresses[idx].Family == candidate.Family &&
+                            string.Equals(mergedAddresses[idx].Address, candidate.Address, StringComparison.Ordinal))
+                        {
+                            existing = idx;
+                            break;
+                        }
+                    }
+                    if (existing >= 0)
+                    {
+                        if (string.IsNullOrEmpty(mergedAddresses[existing].Mask) && !string.IsNullOrEmpty(candidate.Mask))
+                            mergedAddresses[existing] = candidate;
+                    }
+                    else
+                    {
+                        // Distinct interfaces may be interleaved; preserve contiguous address ranges.
+                        // Address insertions for previously seen interfaces must shift later ranges.
+                        int insertAt = compact.AddressStartIndex + compact.AddressCount;
+                        if (insertAt < addressCount)
+                        {
+                            Array.Copy(mergedAddresses, insertAt, mergedAddresses, insertAt + 1, addressCount - insertAt);
+                            for (int j = found + 1; j < uniqueCount; j++)
+                            {
+                                var later = _scratchRawInterfaces[j];
+                                later.AddressStartIndex++;
+                                _scratchRawInterfaces[j] = later;
+                            }
+                        }
+                        mergedAddresses[insertAt] = candidate;
+                        addressCount++;
+                        compact.AddressCount++;
+                        _scratchRawInterfaces[found] = compact;
+                    }
+                }
+            }
+
+            Array.Copy(mergedAddresses, _scratchAddresses, addressCount);
+            return uniqueCount;
+        }
+#endif
 
         private static void EnrichDefaultGatewayFallback(RawInterfaceData[] rawInterfaces, int count, NetworkInterface[] nics)
         {
@@ -516,6 +563,13 @@ namespace Network.InterfaceInfo
         {
             if (nic == null) return NetworkType.Unknown;
 
+            string name = nic.Name ?? string.Empty;
+            if (name == "lo" || name.StartsWith("lo:", StringComparison.Ordinal))
+                return NetworkType.Loopback;
+            if (name == "dummy" || name.StartsWith("dummy", StringComparison.Ordinal) ||
+                name.StartsWith("ifb", StringComparison.Ordinal))
+                return NetworkType.Virtual;
+
             var type = nic.NetworkInterfaceType;
             if (type == NetworkInterfaceType.Loopback)
                 return NetworkType.Loopback;
@@ -538,7 +592,6 @@ namespace Network.InterfaceInfo
                 type == NetworkInterfaceType.Slip)
                 return NetworkType.VPN;
 
-            string name = nic.Name ?? string.Empty;
             string desc = nic.Description ?? string.Empty;
 
             if (name.IndexOf("bluetooth", StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -585,7 +638,7 @@ namespace Network.InterfaceInfo
         {
             _errorCount++;
             _lastErrorMessage = message;
-            UnityEngine.Debug.LogWarning($"[NetworkInfoManager] {message}");
+            NetworkLogger.LogWarning($"[Network] {message}");
         }
 
         public void Dispose()
@@ -593,13 +646,6 @@ namespace Network.InterfaceInfo
             if (_isDisposed) return;
             _isDisposed = true;
 
-            StopWatching();
-
-            lock (_debounceLock)
-            {
-                _debounceTimer?.Dispose();
-                _debounceTimer = null;
-            }
         }
 
         private sealed class RawInterfaceComparer : System.Collections.Generic.IComparer<RawInterfaceData>
