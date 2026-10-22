@@ -10,8 +10,8 @@ Stream headset, controller, and body-tracking data from Meta Quest and PICO dire
 
 <table align="center">
   <tr>
-    <td><img src="./doc/UTXR.jpg" width="600"></td>
-    <td><img src="./doc/UTXRSpatialVideo.gif" width="445"></td>
+    <td width="56%"><img src="./doc/UTXR.jpg"></td>
+    <td width="44%"><img src="./doc/UTXRSpatialVideo.gif"></td>
   </tr>
 </table>
 
