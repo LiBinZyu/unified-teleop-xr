@@ -11,7 +11,7 @@
 <table align="center">
   <tr>
     <td><img src="./doc/UTXR.jpg" width="600"></td>
-    <td><img src="./doc/UTXRSpatialVideo.gif" width="338"></td>
+    <td><img src="./doc/UTXRSpatialVideo.gif" width="445"></td>
   </tr>
 </table>
 
