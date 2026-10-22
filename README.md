@@ -1,31 +1,28 @@
 <div align="center">
 
-<h1>Unified Teleop XR</h1>
+<img src="./doc/UTXRtitle.svg" alt="Unified Teleop XR" width="345" />
 
-<h3>Turn your XR headset into a motion input device.</h3>
+**Turn your XR headset into a motion input device.**
 
-<p>Stream tracking data from Meta Quest and PICO to ROS 2 via CycloneDDS — without building a Unity application.</p>
+Stream headset, controller, and body-tracking data from Meta Quest and PICO directly to ROS 2 over CycloneDDS — without building your own Unity application.
 
-<p>
-  <b>Native CycloneDDS</b> &nbsp;·&nbsp;
-  <b>REAL Spatial Video</b> &nbsp;·&nbsp;
-  <b>No XR Development</b> &nbsp;·&nbsp;
-  <b>Postprocess Safeguards</b> &nbsp;·&nbsp;
-</p>
+<kbd>OpenXR</kbd> <kbd>CycloneDDS</kbd> <kbd>ROS 2</kbd>
 
-<p>
-  <img src="./doc/UTXR.jpg" alt="Unified Teleop XR" width="100%" />
-</p>
+<table align="center">
+  <tr>
+    <td><img src="./doc/UTXR.jpg" width="600"></td>
+    <td><img src="./doc/UTXRSpatialVideo.gif" width="338"></td>
+  </tr>
+</table>
 
 <p>
-  <a href="#quick-start"><b>Quick Start</b></a> &nbsp;·&nbsp;
-  <a href="#architecture"><b>Architecture</b></a> &nbsp;·&nbsp;
-  <a href="#data--topics"><b>Data &amp; Topics</b></a> &nbsp;·&nbsp;
-  <a href="#video"><b>Spatial Video</b></a> &nbsp;·&nbsp;
-  <a href="#devices--compatibility"><b>Devices</b></a> &nbsp;·&nbsp;
-  <a href="./README_CN.md"><b>中文</b></a>
+  <a href="#quick-start">Quick Start ↗</a> ·
+  <a href="#architecture">Architecture ↗</a> ·
+  <a href="#data">Data &amp; Topics ↗</a> ·
+  <a href="#gpu-reconstructed-spatial-video">Spatial Video ↗</a> ·
+  <a href="#supported-devices">Devices ↗</a> ·
+  <a href="./README_CN.md">中文 ↗</a>
 </p>
-
 </div>
 
 > The XR → CycloneDDS → ROS 2 path has been validated with a CycloneDDS-based ROS 2 receiver. Stable standalone APK releases for Meta Quest and PICO are planned. UTXR (Unified Teleop XR) is an open-source Unity toolkit that enables developers to stream tracked motion data to ROS2 systems with minimal setup. It streams pose, velocity, acceleration, and interaction data using OpenXR and CycloneDDS. It has been used for robot teleoperation, robotic-arm manipulation, remote assistance, HRI research, egocentric data collection, and deep-learning workflows.
@@ -73,7 +70,7 @@ No Unity editor, ROS–TCP bridge, or custom ROS 2 packages required. The receiv
 
 A robot, ROS 2 node, simulator, or native DDS application on the same network can subscribe to the published data directly.
 
-<img src="./doc/UnifiedTeleopXR.svg" style="width:100%; max-width:600px;">
+<img src="./doc/UnifiedTeleopXR.svg" style="display:block; margin:auto; width:100%; max-width:600px;">
 
 <a id="data--topics"></a>
 ## Data
@@ -130,8 +127,8 @@ A robot, ROS 2 node, simulator, or native DDS application on the same network ca
 </details>
 
 <div style="display:flex; gap:10px;">
-  <img src="./doc/rqt1.jpeg" width="48%">
-  <img src="./doc/rqt2.jpeg" width="48%">
+  <img src="./doc/rqt1.jpeg" width="48%" style="border-radius: 12px; border: 1px solid #E4E4E8;">
+  <img src="./doc/rqt2.jpeg" width="48%" style="border-radius: 12px; border: 1px solid #E4E4E8;">
 </div>
 
 ### Safeguard Mode
@@ -152,7 +149,9 @@ Place an iPhone Pro at the remote site to share a spatial view of the environmen
 
 This input source is dependent on the [Record3D App](https://record3d.app/) by Marek Simonik. Wi-Fi transmit is a paid feature on this iOS App. To use this feature on UTXR, you have to purchase this feature on the [App Store](https://apps.apple.com/us/app/record3d-3d-videos/id1477716895?ls=1). 
 
-<img src="./doc/UTXRSpatialVideo.gif" style="width:200%; max-width:600px;">
+<div align="center">
+  <img src="./doc/UTXRSpatialVideo.gif" style="width:100%; max-width:600px; border-radius: 16px; border: 1px solid #E4E4E8;">
+</div>
 
 <a id="devices--compatibility"></a>
 ## Supported Devices
