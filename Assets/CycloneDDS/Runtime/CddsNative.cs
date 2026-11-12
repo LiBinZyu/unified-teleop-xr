@@ -119,6 +119,15 @@ namespace CycloneDDS
         [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern int cdds_take_raw(int sub_handle, IntPtr out_sample, UIntPtr sample_size);
 
+        [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+        public static extern UIntPtr cdds_sample_size(DdsMessageType type);
+
+        [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr cdds_sample_alloc(DdsMessageType type);
+
+        [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void cdds_sample_free(DdsMessageType type, IntPtr sample);
+
         // std_msgs Low-Level Publishing
         [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern int cdds_publish_bool(int pub_handle, bool value);
@@ -167,6 +176,16 @@ namespace CycloneDDS
 
         [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern int cdds_publish_string(int pub_handle, string str);
+
+        [DllImport(LibName, EntryPoint = "cdds_publish_float32_multi_array", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int PublishFloat32MultiArray(int pub_handle, [In] float[] data, uint count);
+
+        /// <summary>Publishes the entire array with an empty layout. Reuse the array between calls.</summary>
+        public static int cdds_publish_float32_multi_array(int pub_handle, float[] data)
+        {
+            if (data == null) throw new ArgumentNullException(nameof(data));
+            return PublishFloat32MultiArray(pub_handle, data, (uint)data.Length);
+        }
 
         // geometry_msgs Low-Level Publishing
         [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]

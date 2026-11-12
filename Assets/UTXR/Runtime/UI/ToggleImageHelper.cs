@@ -18,6 +18,13 @@ namespace UTXR.UI
             toggle.onValueChanged.AddListener(UpdateState);
             UpdateState(toggle.isOn);
         }
+
+        public static void SetIsOnWithoutNotify(Toggle toggle, bool isOn)
+        {
+            toggle.SetIsOnWithoutNotify(isOn);
+            if (toggle.TryGetComponent<ToggleImageHelper>(out var imageHelper))
+                imageHelper.UpdateState(toggle.isOn);
+        }
     
         private void UpdateState(bool isOn)
         {

@@ -372,27 +372,53 @@ CDDS_EXPORT int cdds_publish_raw(int pub_handle, const void* sample_data) {
     return dds_write(slot->entity, sample_data);
 }
 
+CDDS_EXPORT size_t cdds_sample_size(dds_msg_type_t type) {
+    const dds_topic_descriptor_t* desc = get_descriptor(type);
+    return desc ? desc->m_size : 0;
+}
+
+CDDS_EXPORT void* cdds_sample_alloc(dds_msg_type_t type) {
+    size_t size = cdds_sample_size(type);
+    if (size == 0) return NULL;
+    void* sample = dds_alloc(size);
+    if (sample) memset(sample, 0, size);
+    return sample;
+}
+
+CDDS_EXPORT void cdds_sample_free(dds_msg_type_t type, void* sample) {
+    const dds_topic_descriptor_t* desc = get_descriptor(type);
+    if (desc && sample) dds_sample_free(sample, desc, DDS_FREE_ALL);
+}
+
 CDDS_EXPORT int cdds_take_raw(int sub_handle, void* out_sample, size_t sample_size) {
     EntitySlot* slot = find_slot(sub_handle);
-    if (!slot || slot->is_writer || !out_sample) return -1;
+    if (!slot || slot->is_writer || !out_sample) return DDS_RETCODE_BAD_PARAMETER;
+    const dds_topic_descriptor_t* desc = get_descriptor(slot->type);
+    if (!desc || sample_size != desc->m_size) return DDS_RETCODE_BAD_PARAMETER;
 
-    void* samples[1] = { NULL };
+    // A non-null, initialized sample selects DDS's caller-owned copy path. Nested arrays and
+    // strings are allocated/reused by DDS and remain owned by this sample, not by a reader loan.
+    void* samples[1] = { out_sample };
     dds_sample_info_t infos[1];
     dds_return_t rc = dds_take(slot->entity, samples, infos, 1, 1);
-    if (rc > 0) {
-        int valid = 0;
-        if (infos[0].valid_data && samples[0] != NULL) {
-            memcpy(out_sample, samples[0], sample_size);
-            valid = 1;
-        }
-        dds_return_loan(slot->entity, samples, rc);
-        return valid;
-    }
-    return 0;
+    if (rc < 0) return rc;
+    return rc > 0 && infos[0].valid_data ? 1 : 0;
 }
 
 CDDS_EXPORT int cdds_take_latest_raw(int sub_handle, void* out_buffer, int buffer_size) {
+    if (buffer_size <= 0) return DDS_RETCODE_BAD_PARAMETER;
     return cdds_take_raw(sub_handle, out_buffer, (size_t)buffer_size);
+}
+
+CDDS_EXPORT int cdds_publish_float32_multi_array(int pub_handle, const float* data, uint32_t count) {
+    EntitySlot* slot = find_slot(pub_handle);
+    if (!slot || !slot->is_writer || slot->type != DDS_TYPE_STD_MSGS_FLOAT32_MULTI_ARRAY ||
+        (count > 0 && data == NULL)) return DDS_RETCODE_BAD_PARAMETER;
+    struct std_msgs_msg_dds__Float32MultiArray_ msg = { 0 };
+    msg.data._maximum = msg.data._length = count;
+    msg.data._buffer = (float*)data;
+    msg.data._release = false;
+    return dds_write(slot->entity, &msg);
 }
 
 // Low-Level std_msgs Publishing

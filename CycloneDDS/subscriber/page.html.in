@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>XR Subscriber</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/viewer.js"></script>
+</head>
+<body>
+  <header class="toolbar">
+    <div class="brand">
+      <svg class="brand-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3Zm0 9 8-4.5M12 12 4 7.5m8 4.5v9"/></svg>
+      <h1>XR Subscriber</h1>
+    </div>
+    <div class="toolbar-right">
+      <span id="connection" role="status" class="connection"><i></i><span>Connecting</span></span>
+      <button id="monitor-toggle" class="pill monitor-toggle" type="button" aria-controls="monitor" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg><span>Data Monitor</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="inspector" aria-label="Visibility">
+      <header class="pane-heading"><h2>Visibility</h2></header>
+      <div class="inspector-content">
+        <section>
+          <h3>Pose axes</h3>
+          <div id="pose-switches"></div>
+        </section>
+        <section>
+          <h3>Hands</h3>
+          <div id="hand-switches"></div>
+        </section>
+        <section class="controller-group">
+          <h3>Controllers</h3>
+          <div id="input-switches"></div>
+          <div class="controller-input">
+            <div class="controller-model">
+              <label class="sr-only" for="device">Controller model</label>
+              <select id="device"><option value="pico">PICO 4 Ultra</option><option value="quest">Quest Touch Plus</option></select>
+            </div>
+            <div class="controller-art">
+              <img id="controller-render" alt="Left and right controllers" draggable="false">
+              <div id="controller-mask" aria-hidden="true"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </aside>
+
+    <section class="scene-pane" aria-labelledby="scene-heading">
+      <header class="pane-heading">
+        <h2 id="scene-heading">3D View</h2>
+        <button id="fit-view" class="icon-button" title="Fit view" aria-label="Fit view" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5m11-5h5v5M9 20H4v-5m11 5h5v-5"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </header>
+      <div id="viewport" class="viewport">
+        <div id="scene-labels" class="scene-labels" aria-hidden="true"></div>
+        <div id="scene-empty" class="scene-empty">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12V3m0 9 8 5m-8-5-8 5m6-12 2-2 2 2m3 12h3v-3M4 14v3h3"/></svg>
+          <span>Waiting for pose data</span>
+        </div>
+        <div class="scene-key" aria-label="ROS axes in meters">
+          <span><b class="axis-x">X</b> Forward</span><span><b class="axis-y">Y</b> Left</span><span><b class="axis-z">Z</b> Up</span><span>m</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <section id="monitor" class="monitor" aria-labelledby="monitor-heading" hidden>
+    <header class="monitor-heading">
+      <h2 id="monitor-heading">Data Monitor</h2>
+      <span id="stream-count" class="muted">0 live</span>
+    </header>
+    <div class="monitor-layout">
+      <aside class="streams" aria-label="Data streams">
+        <input id="stream-filter" type="search" placeholder="Filter streams" aria-label="Filter streams">
+        <p id="no-streams" class="muted">No live streams</p>
+        <div id="stream-list"></div>
+      </aside>
+      <div class="plot-pane">
+        <div class="plot-options">
+          <label>Time (s) <input id="time-range" type="number" min="1" max="120" step="1" value="15"></label>
+          <label>Y min <input id="data-min" type="number" step="any" placeholder="Auto"></label>
+          <label>Y max <input id="data-max" type="number" step="any" placeholder="Auto"></label>
+          <button id="pause-plot" type="button" class="pill" aria-pressed="false">Pause</button>
+        </div>
+        <p id="range-error" class="range-error" role="status" hidden>Y max must exceed Y min.</p>
+        <div class="plot-area">
+          <canvas id="plot" aria-label="Time plot of selected DDS fields"></canvas>
+          <span id="plot-empty" class="muted">Select fields to plot</span>
+          <output id="plot-cursor" hidden></output>
+        </div>
+        <div id="plot-legend" class="plot-legend" aria-label="Plot legend"></div>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

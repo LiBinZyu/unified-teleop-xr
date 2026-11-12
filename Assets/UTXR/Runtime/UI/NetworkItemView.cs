@@ -305,7 +305,7 @@ namespace UTXR.UI
         /// <summary>
         /// Clears all displayed text and values to default empty state.
         /// </summary>
-        public void Clear()
+        public void Clear(Sprite offlineIcon = null)
         {
             _currentInterfaceName = null;
             _currentInterfaceId = null;
@@ -315,7 +315,11 @@ namespace UTXR.UI
             if (ipAddressText != null) ipAddressText.text = string.Empty;
             if (linkSpeedText != null) linkSpeedText.text = string.Empty;
             ClearTraffic();
-            if (typeImage != null) typeImage.enabled = false;
+            if (typeImage != null)
+            {
+                typeImage.sprite = offlineIcon;
+                typeImage.enabled = offlineIcon != null;
+            }
             if (linkSpeedImage != null) linkSpeedImage.enabled = false;
 
             _cachedDisplayName = null;
@@ -323,7 +327,7 @@ namespace UTXR.UI
             _cachedLinkSpeed = null;
             _cachedRx = null;
             _cachedTx = null;
-            _cachedTypeSprite = null;
+            _cachedTypeSprite = offlineIcon;
             _cachedSpeedSprite = null;
         }
     }

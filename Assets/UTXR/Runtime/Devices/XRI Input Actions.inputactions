@@ -445,6 +445,33 @@
                     "initialStateCheck": true
                 },
                 {
+                    "name": "Controller Position",
+                    "type": "Value",
+                    "id": "e3258d40-afc4-4470-ac9a-bb76f3fe422c",
+                    "expectedControlType": "Vector3",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Controller Rotation",
+                    "type": "Value",
+                    "id": "44e36768-517b-49d4-8155-82137e7e4f41",
+                    "expectedControlType": "Quaternion",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Controller Tracking State",
+                    "type": "Value",
+                    "id": "b6dee193-09d4-4eb3-9f86-f4cce4984231",
+                    "expectedControlType": "Integer",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "Haptic Device",
                     "type": "PassThrough",
                     "id": "664a62b0-e178-421d-b3f8-014eec01591d",
@@ -644,6 +671,50 @@
                     "isPartOfComposite": true
                 },
                 {
+                    "name": "Quaternion Fallback",
+                    "id": "ab083ff1-0cc0-461a-80b1-b26ad1bb3e8b",
+                    "path": "QuaternionFallback",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Rotation",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "first",
+                    "id": "02162f48-2d0d-4582-91ba-2b231bb6ff6e",
+                    "path": "<OculusTouchController>{LeftHand}/pointerRotation",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Rotation",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "08b0e0dd-156b-4c1c-85d8-6f77de083489",
+                    "path": "<QuestTouchPlusController>{LeftHand}/pointerRotation",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Rotation",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Third",
+                    "id": "a94b2925-67ee-40e4-8c46-175715a6a372",
+                    "path": "<QuestProTouchController>{LeftHand}/pointerRotation",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Rotation",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
                     "name": "Vector 3 Fallback",
                     "id": "14aeff85-d719-43ff-a124-b1cd7ca8686d",
                     "path": "Vector3Fallback",
@@ -688,6 +759,50 @@
                     "isPartOfComposite": true
                 },
                 {
+                    "name": "Vector 3 Fallback",
+                    "id": "d91a506c-9b67-4a18-bd9f-a232b3eb7f14",
+                    "path": "Vector3Fallback",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Position",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "first",
+                    "id": "74120cad-43a3-44ea-9b62-52ce99a14767",
+                    "path": "<OculusTouchController>{LeftHand}/pointerPosition",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Position",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "first",
+                    "id": "f8198e9a-3985-4b29-8201-4322e3c94069",
+                    "path": "<QuestTouchPlusController>{LeftHand}/pointerPosition",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Position",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "first",
+                    "id": "847b53c9-f24c-41f2-8883-f81aea846d4e",
+                    "path": "<QuestProTouchController>{LeftHand}/pointerPosition",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Position",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
                     "name": "",
                     "id": "acdf9550-5529-4ff7-8558-73ecdf0d75bd",
                     "path": "<XRController>{LeftHand}/*",
@@ -719,6 +834,50 @@
                     "action": "Tracking State",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "Integer Fallback",
+                    "id": "bbbda1a1-f2d0-45c4-8b11-47c9d1053da8",
+                    "path": "IntegerFallback",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Tracking State",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "first",
+                    "id": "78e40c2d-51ec-4373-8098-f5f6ba40d5e4",
+                    "path": "<OculusTouchController>{LeftHand}/trackingState",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Tracking State",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "second",
+                    "id": "e5a0e5a7-70d6-4024-9724-eec3b4b9652f",
+                    "path": "<QuestTouchPlusController>{LeftHand}/trackingState",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Tracking State",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Third",
+                    "id": "44380964-a149-46af-923b-d3961db2f5b7",
+                    "path": "<QuestProTouchController>{LeftHand}/trackingState",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Tracking State",
+                    "isComposite": false,
+                    "isPartOfComposite": true
                 },
                 {
                     "name": "",
@@ -1920,6 +2079,33 @@
                     "initialStateCheck": true
                 },
                 {
+                    "name": "Controller Position",
+                    "type": "Value",
+                    "id": "5839df2d-bc3f-4836-86f1-9613042de89c",
+                    "expectedControlType": "Vector3",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Controller Rotation",
+                    "type": "Value",
+                    "id": "33dfa93c-fff9-4206-9a42-1ffc296de549",
+                    "expectedControlType": "Quaternion",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Controller Tracking State",
+                    "type": "Value",
+                    "id": "d0e661d4-a766-43d5-b6e9-55ea2de4c79a",
+                    "expectedControlType": "Integer",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "Haptic Device",
                     "type": "PassThrough",
                     "id": "57b2a1b4-3290-46d6-ac07-4854ee8f91b1",
@@ -2159,6 +2345,138 @@
                     "processors": "",
                     "groups": "",
                     "action": "Position",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Quaternion Fallback",
+                    "id": "81744718-2757-4ee1-a421-3250da208bb8",
+                    "path": "QuaternionFallback",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Rotation",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "first",
+                    "id": "3d6a9efa-1449-4091-a392-96c00c47dad6",
+                    "path": "<OculusTouchController>{RightHand}/pointerRotation",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Rotation",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "0389bd31-0ea8-4155-9a6a-3a34772acc6e",
+                    "path": "<QuestTouchPlusController>{RightHand}/pointerRotation",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Rotation",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Third",
+                    "id": "5af503d9-6b6c-4132-b6aa-60a20300cf2f",
+                    "path": "<QuestProTouchController>{RightHand}/pointerRotation",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Rotation",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Vector 3 Fallback",
+                    "id": "99cd2212-5d53-475c-adc8-13da576a2457",
+                    "path": "Vector3Fallback",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Position",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "first",
+                    "id": "a8238679-b20f-4636-9647-a5e61398d337",
+                    "path": "<OculusTouchController>{RightHand}/pointerPosition",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Position",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "first",
+                    "id": "77665203-420f-4510-92cb-f7f530f893b6",
+                    "path": "<QuestTouchPlusController>{RightHand}/pointerPosition",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Position",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "first",
+                    "id": "376fd8d1-8a46-4bd6-8a5f-8564c64e1676",
+                    "path": "<QuestProTouchController>{RightHand}/pointerPosition",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Position",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Integer Fallback",
+                    "id": "fe28481a-23cd-497a-9267-8ca75766894f",
+                    "path": "IntegerFallback",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Tracking State",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "first",
+                    "id": "5e8ccc79-1636-4ff9-868f-dcaa6ab8b793",
+                    "path": "<OculusTouchController>{RightHand}/trackingState",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Tracking State",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "second",
+                    "id": "1317ac9b-46c6-4a6f-8590-91d45722b276",
+                    "path": "<QuestTouchPlusController>{RightHand}/trackingState",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Tracking State",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Third",
+                    "id": "1e937d6d-bd87-4731-9c7e-87d350d809ed",
+                    "path": "<QuestProTouchController>{RightHand}/trackingState",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Tracking State",
                     "isComposite": false,
                     "isPartOfComposite": true
                 },

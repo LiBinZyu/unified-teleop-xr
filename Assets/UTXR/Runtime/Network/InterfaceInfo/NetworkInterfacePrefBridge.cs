@@ -27,6 +27,22 @@ namespace Network.InterfaceInfo
         private readonly List<(NetworkInterfaceInfo Info, string LocalIp)> _items =
             new List<(NetworkInterfaceInfo Info, string LocalIp)>();
 
+        public bool TryGetSelection(out NetworkInterfaceInfo info, out string localIp)
+        {
+            info = default;
+            localIp = null;
+            var snapshot = _service != null ? _service.CurrentSnapshot : NetworkSnapshot.Empty;
+            return !string.IsNullOrEmpty(_selectedId) &&
+                snapshot.TryFindInterfaceById(_selectedId, out _, out info, out localIp) &&
+                info.IsUp && !info.IsLoopback && !string.IsNullOrEmpty(localIp);
+        }
+
+        public static void UnbindDropdown(TMP_Dropdown dropdown)
+        {
+            if (dropdown != null && dropdown.TryGetComponent<NetworkInterfacePrefBridge>(out var bridge))
+                bridge._onSelectionChanged = null;
+        }
+
         public static string ResolvePreferredInterfaceId(string prefKey, string targetIp, string fallbackId = "")
         {
             var interfaces = NetworkInfoService.GetActiveInterfaces();
@@ -181,6 +197,7 @@ namespace Network.InterfaceInfo
             {
                 _dropdown.SetValueWithoutNotify(0);
                 _dropdown.RefreshShownValue();
+                _onSelectionChanged?.Invoke(default, null);
                 _notified = false; // Reconnect must notify DDS/Record3D, even if same IP.
                 return;
             }

@@ -50,3 +50,15 @@ else()
         CycloneDDS::ddsc
     )
 endif()
+
+include(CTest)
+if(BUILD_TESTING AND NOT ANDROID)
+    add_executable(test_arrays test/test_arrays.c)
+    target_link_libraries(test_arrays PRIVATE cdds_plugin CycloneDDS::ddsc)
+    if(WIN32)
+        add_custom_command(TARGET test_arrays POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:CycloneDDS::ddsc> $<TARGET_FILE_DIR:test_arrays>)
+    endif()
+    add_test(NAME arrays_and_raw_ownership COMMAND test_arrays)
+endif()

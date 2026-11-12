@@ -1,10 +1,13 @@
 #ifndef __std_msgs__msg__dds___Float32MultiArray__idl__
 #define __std_msgs__msg__dds___Float32MultiArray__idl__
 
+#include "std_msgs/msg/dds_/MultiArrayLayout_.idl"
+
 module std_msgs {
   module msg {
     module dds_ {
       struct Float32MultiArray_ {
+        std_msgs::msg::dds_::MultiArrayLayout_ layout;
         sequence<float> data;
       };
     };

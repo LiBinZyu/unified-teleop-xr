@@ -17,5 +17,9 @@
   <uses-feature android:name="android.hardware.vr.headtracking" android:version="1" android:required="true" />
   <uses-feature android:name="oculus.software.overlay_keyboard" android:required="true" />
   <uses-feature android:name="com.oculus.feature.PASSTHROUGH" android:required="true" />
+  <!-- Passthrough display only: exclude raw camera access added by the Meta OpenXR package. -->
+  <uses-permission android:name="com.oculus.permission.USE_PASSTHROUGH_CAMERA" tools:node="remove" />
+  <uses-permission android:name="horizonos.permission.HEADSET_CAMERA" tools:node="remove" />
+  <uses-permission android:name="android.permission.CAMERA" tools:node="remove" />
   <horizonos:uses-horizonos-sdk horizonos:minSdkVersion="60" horizonos:targetSdkVersion="85" />
 </manifest>

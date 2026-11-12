@@ -64,3 +64,41 @@ Assets/CycloneDDS/
 
 ### 3. 示例代码：`Samples/DdsPublisher.cs`
 展示如何将 Unity XR 跟踪数据通过 `DdsConfig` 与 `CddsNative` 组装并发布至 DDS 网络。
+
+## 浮点数组与 raw 接收
+
+`StdFloat32MultiArray` 的线格式为 `MultiArrayLayout layout` 后接 `float32[] data`，与 ROS 2
+`std_msgs/msg/Float32MultiArray` 字段定义一致。旧插件只有 `data`，接收端若使用了旧 IDL，必须同步更新；
+其他消息 IDL 和类型编号不变。消息互通仍需匹配 DDS topic、类型名和 QoS。
+
+批量发布可复用一个 `float[]`，每次发布整条数组，不需要为每个数值建立 InputActionReference：
+
+```csharp
+int result = CddsNative.cdds_publish_float32_multi_array(publisher, joints);
+if (result < 0) throw new System.InvalidOperationException($"DDS publish failed: {result}");
+```
+
+此接口发送空 `layout.dim`、`data_offset = 0`；需要维度信息时，用 `StdFloat32MultiArray` 的原生布局配合
+`cdds_publish_raw`。发布缓冲只在调用期间借用。
+
+raw 接收现在使用调用方拥有的样本，数组和字符串不会指向已经归还的 reader loan：
+
+```csharp
+using (var sample = new DdsRawSample(DdsMessageType.StdFloat32MultiArray))
+{
+    // 实际使用中在自己的接收循环里复用 sample。
+    if (sample.Take(subscriber))
+    {
+        var view = System.Runtime.InteropServices.Marshal.PtrToStructure<StdFloat32MultiArray>(sample.Pointer);
+        // 将 view.data.buffer 中 view.data.length 个 float 拷贝到预先分配的目标数组。
+    }
+}
+```
+
+subscriber 类型必须与 sample.Type 相同；不要并发访问同一个 sample。嵌套指针只保证在下一次 Take 或 Dispose
+之前有效；需要跨帧保留的数据应拷贝出来。底层 C 调用必须使用匹配类型的 `cdds_sample_alloc` / `cdds_sample_free`
+成对管理，不能再把未初始化的临时内存传入 `cdds_take_raw`。该接口返回 1（有效数据）、0（无有效数据）或负数（DDS 错误）；
+`DdsRawSample.Take` 会将负数转换为异常。
+
+验证：原生测试由 CTest 的 `arrays_and_raw_ownership` 运行；Unity 菜单 `Tools/CycloneDDS/Test Array Interop`
+验证 P/Invoke 与托管结构布局，运行前需停止已有 DDS 会话。

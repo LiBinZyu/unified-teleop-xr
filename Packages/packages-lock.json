@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.unity.2d.sprite": {
+      "version": "1.0.0",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {}
+    },
     "com.unity.burst": {
       "version": "1.8.28",
       "depth": 2,
@@ -83,15 +89,6 @@
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
-    },
-    "com.unity.pico.livepreview": {
-      "version": "file:D:/apex_teleop/misc/PicoLivePreview",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {
-        "com.unity.xr.management": "4.0.0",
-        "com.unity.xr.interaction.toolkit": "2.0.0"
-      }
     },
     "com.unity.render-pipelines.core": {
       "version": "17.0.4",
@@ -306,15 +303,6 @@
         "com.unity.xr.legacyinputhelpers": "2.1.2"
       },
       "url": "https://packages.unity.com"
-    },
-    "com.unity.xr.openxr.picoxr": {
-      "version": "file:D:/apex_teleop/misc/UnityOpenXRIntegrationSDK-1.4.0-20250407",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {
-        "com.unity.xr.core-utils": "2.2.0",
-        "com.unity.xr.openxr": "1.8.2"
-      }
     },
     "com.unity.modules.androidjni": {
       "version": "1.0.0",

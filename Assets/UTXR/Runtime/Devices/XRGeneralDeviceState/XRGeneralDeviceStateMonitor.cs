@@ -1,55 +1,53 @@
 using System;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.XR;
-using UTXR.Core;
+using UnityEngine.Serialization;
+using UnityEngine.XR;
+using UnityEngine.XR.Hands;
+using UnityEngine.XR.Management;
 
 namespace UTXR.Devices
 {
     /// <summary>
-    /// General XR device state monitor.
-    /// Orchestrates controller lifecycle and hardware action bindings.
-    /// Core state evaluation is delegated to XRDeviceStateCore,
-    /// and event dispatching is delegated to XRDeviceEventDispatcher.
+    /// Unity host for explicit Controller/Hand selection. Owns the session and Inspector wiring;
+    /// providers own sampling only. Does not change headset settings or initialize XR subsystems.
     /// </summary>
-    public class XRGeneralDeviceStateMonitor : MonoBehaviour
+    [DisallowMultipleComponent]
+    public class XRGeneralDeviceStateMonitor : MonoBehaviour, IXRDeviceState
     {
-        [Header("Modular Controllers")]
+        [Header("Event Dispatcher")]
         [Tooltip("Dispatcher responsible for status changes and gesture events")]
         [SerializeField] private XRDeviceEventDispatcher eventDispatcher;
 
-        [Header("Left Input Actions")]
-        public InputActionProperty leftIsTrackedAction;
-        public InputActionProperty leftTrackingStateAction;
-        public InputActionProperty leftLinearVelocityAction;
-        public InputActionProperty leftAngularVelocityAction;
-        public InputActionProperty leftLinearAccelerationAction;
-        public InputActionProperty leftAngularAccelerationAction;
-
-        [Header("Right Input Actions")]
-        public InputActionProperty rightIsTrackedAction;
-        public InputActionProperty rightTrackingStateAction;
-        public InputActionProperty rightLinearVelocityAction;
-        public InputActionProperty rightAngularVelocityAction;
-        public InputActionProperty rightLinearAccelerationAction;
-        public InputActionProperty rightAngularAccelerationAction;
-
-        [Tooltip("Optional: specify XRAccelerationDeviceBridge to read acceleration. Automatically uses singleton or controls if null.")]
-        public XRAccelerationDeviceBridge accelerationBridge;
-
         [Header("Filtering Settings")]
-        public FilterMethod filterMethod = FilterMethod.None;
+        public FilterMethod filterMethod = FilterMethod.Combined;
         [Tooltip("Require 6DoF (Position + Rotation) tracking state. If false, 3DoF rotation-only is accepted.")]
-        [SerializeField] private bool require6DoF = true;
-        [SerializeField] private int frameTolerance = 20;
-        [SerializeField] private float lostToleranceSeconds = 0.1f;
-        [SerializeField] private float maxHumanSpeed = 8.0f;          // Upper bound for linear speed sanity check
-        [SerializeField] private float minLinVelForTracking = 0.001f; // Minimum linear speed threshold
-        [SerializeField] private float posJumpMinDelta = 0.015f;      // 1.5cm position jump threshold
-        [SerializeField] private float posJumpMaxImpliedSpeed = 4.0f; // Implied speed threshold (m/s)
-        [SerializeField] private float warningMinDurationSeconds = 2.0f;
-        [SerializeField] private float warnCooldownSeconds = 1.0f;
+        private bool require6DoF = true;
+        private int frameTolerance = 20;
+        private float lostToleranceSeconds = 0.1f;
+        private float maxHumanSpeed = 8.0f;          // Upper bound for linear speed sanity check
+        private float minLinVelForTracking = 0.001f; // Minimum linear speed threshold
+        private float posJumpMinDelta = 0.015f;      // 1.5cm position jump threshold
+        private float posJumpMaxImpliedSpeed = 4.0f; // Implied speed threshold (m/s)
+        private float warningMinDurationSeconds = 2.0f;
+        private float warnCooldownSeconds = 1.0f;
+
+        [Header("Application Input Mode")]
+        [Tooltip("Startup selection. During play, use UseControllers/UseHands or SetMode explicitly; editing this field does not rebind a running provider.")]
+        [SerializeField] private XRInputMode inputMode = XRInputMode.Controller;
+        [FormerlySerializedAs("enableShakeDetection")]
+        [SerializeField] private bool enableSwingDetection = true;
+        [Tooltip("Optional interaction roots controlled exclusively by this monitor. Empty means state monitoring only.")]
+        [SerializeField] private GameObject[] controllerInteractionRoots = Array.Empty<GameObject>();
+        [SerializeField] private GameObject[] handInteractionRoots = Array.Empty<GameObject>();
+
+        [Header("Swing Detection")]
+        [Tooltip("Position change per second (m/s) required to trigger a swing. Must fall below this threshold before another swing.")]
+        private float swingSpeedThreshold = 1.5f;
+        [Tooltip("Minimum time (seconds) between swings")]
+        private float swingCooldownDuration = 0.15f;
+        [Tooltip("Maximum window time (seconds) to complete 3 swings")]
+        private float maxComboInterval = 1.0f;
 
         [Header("Logging Settings")]
         [Tooltip("Print tracking logs to Unity Console")]
@@ -57,376 +55,242 @@ namespace UTXR.Devices
         [Tooltip("Write tracking logs to disk file via Logger.LogApp")]
         public bool enableFileLog = false;
         [Tooltip("Periodic continuous logging interval in seconds (0 = log only on state change)")]
-        [SerializeField] private float logIntervalSeconds = 0.5f;
+        private float logIntervalSeconds = 1.0f;
 
-        [Header("Shake Detection Settings")]
-        [Tooltip("Minimum acceleration (m/s²) required to trigger a swing")]
-        [SerializeField] private float shakeAccelThreshold = 200.0f;
-        [Tooltip("Minimum time (seconds) between swings")]
-        [SerializeField] private float swingCooldownDuration = 0.15f;
-        [Tooltip("Maximum window time (seconds) to complete 3 swings")]
-        [SerializeField] private float maxComboInterval = 1.0f;
+        private XRDeviceStateSession _session;
+        private XRDeviceState _lastLeft, _lastRight;
+        private bool _hasLeftState, _hasRightState, _suppressWarning;
+        private float _lastWarnTime = float.NegativeInfinity, _lastLogTime;
+        private static readonly XRProviderStatus DisabledStatus = new XRProviderStatus(XRProviderStatusCode.Disabled, "Monitor is disabled.");
+        private XRProviderStatus _inactiveStatus = DisabledStatus;
 
-        private XRController _leftDeviceCache;
-        private XRController _rightDeviceCache;
-        private float _lastDeviceSearchTime = 0f;
+        public XRInputMode Mode => _session?.Mode ?? inputMode;
+        public XRProviderStatus ProviderStatus => _session?.ProviderStatus ?? _inactiveStatus;
+        public XRDeviceEventDispatcher EventDispatcher => eventDispatcher;
+        public bool IsLeftTracked => GetState(XRSide.Left).IsTracked;
+        public bool IsRightTracked => GetState(XRSide.Right).IsTracked;
+        public bool IsLeftWarning => GetState(XRSide.Left).IsWarning;
+        public bool IsRightWarning => GetState(XRSide.Right).IsWarning;
+        public event Action<XRInputMode> ModeChanged;
+        public event Action<XRProviderStatus> ProviderStatusChanged;
+        public event Action<XRSide, XRDeviceState> TrackingChanged;
 
-        private bool _leftWasTracked = false;
-        private bool _rightWasTracked = false;
-        private bool _leftWasWarning = false;
-        private bool _rightWasWarning = false;
-        private bool _isInitialized = false;
-
-        private bool _leftWasOK = false;
-        private bool _rightWasOK = false;
-        private float _lastWarnTime = -999f;
-
-        private ControllerTrackingState _leftState;
-        private ControllerTrackingState _rightState;
-        private HandLogCache _leftLogCache;
-        private HandLogCache _rightLogCache;
-
-        private bool _leftDiagDone = false;
-        private bool _rightDiagDone = false;
-
-        #region Public Properties & Query APIs
-
-        public XRDeviceEventDispatcher EventDispatcher
-        {
-            get
-            {
-                if (eventDispatcher == null)
-                {
-                    eventDispatcher = GetComponent<XRDeviceEventDispatcher>();
-                    if (eventDispatcher == null)
-                    {
-                        eventDispatcher = gameObject.AddComponent<XRDeviceEventDispatcher>();
-                    }
-                }
-                return eventDispatcher;
-            }
-        }
-
-        public bool IsLeftTracked => _leftWasTracked;
-        public bool IsRightTracked => _rightWasTracked;
-        public bool IsLeftWarning => _leftWasWarning;
-        public bool IsRightWarning => _rightWasWarning;
-
-        public int GetRawLeftTrackingState() => XRDeviceStateCore.GetRawTrackingState(leftTrackingStateAction, _leftDeviceCache);
-        public int GetRawRightTrackingState() => XRDeviceStateCore.GetRawTrackingState(rightTrackingStateAction, _rightDeviceCache);
-
-        public int GetLeftTrackingState() => !IsLeftTracked ? 0 : GetRawLeftTrackingState();
-        public int GetRightTrackingState() => !IsRightTracked ? 0 : GetRawRightTrackingState();
-
-        public Vector3 GetLinearVelocity(bool isLeft, XRController device = null)
-            => XRDeviceStateCore.GetLinearVelocity(device ?? (isLeft ? _leftDeviceCache : _rightDeviceCache));
-
-        public Vector3 GetAngularVelocity(bool isLeft, XRController device = null)
-            => XRDeviceStateCore.GetAngularVelocity(device ?? (isLeft ? _leftDeviceCache : _rightDeviceCache));
-
-        public Vector3 GetLinearAcceleration(bool isLeft, XRController device = null)
-            => XRDeviceStateCore.GetLinearAcceleration(device ?? (isLeft ? _leftDeviceCache : _rightDeviceCache), accelerationBridge, isLeft);
-
-        public Vector3 GetAngularAcceleration(bool isLeft, XRController device = null)
-            => XRDeviceStateCore.GetAngularAcceleration(device ?? (isLeft ? _leftDeviceCache : _rightDeviceCache), accelerationBridge, isLeft);
-
-        #endregion
-
-        #region Event Properties (Backward Compatibility)
-
-        public UnityEvent OnLeftTracked => eventDispatcher != null ? eventDispatcher.OnLeftTracked : null;
-        public UnityEvent OnLeftUntracked => eventDispatcher != null ? eventDispatcher.OnLeftUntracked : null;
-        public UnityEvent OnRightTracked => eventDispatcher != null ? eventDispatcher.OnRightTracked : null;
-        public UnityEvent OnRightUntracked => eventDispatcher != null ? eventDispatcher.OnRightUntracked : null;
-        public UnityEvent OnControllerTrackWarn => eventDispatcher != null ? eventDispatcher.OnControllerTrackWarn : null;
-        public UnityEvent OnLeftSwing => eventDispatcher != null ? eventDispatcher.OnLeftSwing : null;
-        public UnityEvent OnRightSwing => eventDispatcher != null ? eventDispatcher.OnRightSwing : null;
-        public UnityEvent OnLeftTripleSwing => eventDispatcher != null ? eventDispatcher.OnLeftTripleSwing : null;
-        public UnityEvent OnRightTripleSwing => eventDispatcher != null ? eventDispatcher.OnRightTripleSwing : null;
-        public UnityEvent OnAnyShake => eventDispatcher != null ? eventDispatcher.OnAnyShake : null;
-
-        #endregion
-
-        private void Awake()
-        {
-            EnsureDependencies();
-        }
-
-        private void EnsureDependencies()
-        {
-            if (eventDispatcher == null)
-            {
-                eventDispatcher = GetComponent<XRDeviceEventDispatcher>();
-                if (eventDispatcher == null)
-                {
-                    eventDispatcher = gameObject.AddComponent<XRDeviceEventDispatcher>();
-                }
-            }
-        }
+        public UnityEvent OnLeftTracked => eventDispatcher.OnLeftTracked;
+        public UnityEvent OnLeftUntracked => eventDispatcher.OnLeftUntracked;
+        public UnityEvent OnRightTracked => eventDispatcher.OnRightTracked;
+        public UnityEvent OnRightUntracked => eventDispatcher.OnRightUntracked;
+        public UnityEvent OnTrackingWarning => eventDispatcher.OnTrackingWarning;
+        public UnityEvent OnLeftSwing => eventDispatcher.OnLeftSwing;
+        public UnityEvent OnRightSwing => eventDispatcher.OnRightSwing;
+        public UnityEvent OnLeftTripleSwing => eventDispatcher.OnLeftTripleSwing;
+        public UnityEvent OnRightTripleSwing => eventDispatcher.OnRightTripleSwing;
+        public UnityEvent OnAnyShake => eventDispatcher.OnAnyShake;
 
         private void OnEnable()
         {
-            InputSystem.onDeviceChange += OnDeviceChange;
-            XRDeviceStateCore.FindControllers(out _leftDeviceCache, out _rightDeviceCache);
-
-            EnableActionProperty(leftIsTrackedAction);
-            EnableActionProperty(rightIsTrackedAction);
-            EnableActionProperty(leftTrackingStateAction);
-            EnableActionProperty(rightTrackingStateAction);
-            EnableActionProperty(leftLinearVelocityAction);
-            EnableActionProperty(rightLinearVelocityAction);
-            EnableActionProperty(leftAngularVelocityAction);
-            EnableActionProperty(rightAngularVelocityAction);
-            EnableActionProperty(leftLinearAccelerationAction);
-            EnableActionProperty(rightLinearAccelerationAction);
-            EnableActionProperty(leftAngularAccelerationAction);
-            EnableActionProperty(rightAngularAccelerationAction);
+            if (eventDispatcher == null)
+            {
+                _inactiveStatus = new XRProviderStatus(XRProviderStatusCode.InvalidConfiguration,
+                    "Assign Event Dispatcher explicitly. No component will be searched for or created.");
+                Debug.LogError($"[XRDeviceState] {_inactiveStatus}", this);
+                enabled = false;
+                return;
+            }
+            try
+            {
+                ValidateInteractionRoots();
+                _session = new XRDeviceStateSession(CreateProvider, inputMode, CreateSettings());
+            }
+            catch (ArgumentException exception)
+            {
+                _inactiveStatus = new XRProviderStatus(XRProviderStatusCode.InvalidConfiguration, exception.Message);
+                Debug.LogException(exception, this);
+                enabled = false;
+                return;
+            }
+            _hasLeftState = _hasRightState = false;
+            _suppressWarning = true;
+            _session.ModeChanged += HandleModeChanged;
+            _session.ProviderStatusChanged += HandleProviderStatusChanged;
+            _session.TrackingChanged += HandleStateChanged;
+            _session.RefreshProvider();
+            ApplyInteractionMode(inputMode);
         }
 
         private void OnDisable()
         {
-            InputSystem.onDeviceChange -= OnDeviceChange;
-
-            DisableActionProperty(leftIsTrackedAction);
-            DisableActionProperty(rightIsTrackedAction);
-            DisableActionProperty(leftTrackingStateAction);
-            DisableActionProperty(rightTrackingStateAction);
-            DisableActionProperty(leftLinearVelocityAction);
-            DisableActionProperty(rightLinearVelocityAction);
-            DisableActionProperty(leftAngularVelocityAction);
-            DisableActionProperty(rightAngularVelocityAction);
-            DisableActionProperty(leftLinearAccelerationAction);
-            DisableActionProperty(rightLinearAccelerationAction);
-            DisableActionProperty(leftAngularAccelerationAction);
-            DisableActionProperty(rightAngularAccelerationAction);
-        }
-
-        private void Start()
-        {
-            _leftState.Reset();
-            _rightState.Reset();
+            if (_session == null) return;
+            _suppressWarning = true;
+            inputMode = _session.Mode;
+            try { _session.Dispose(); }
+            finally
+            {
+                _session.ModeChanged -= HandleModeChanged;
+                _session.ProviderStatusChanged -= HandleProviderStatusChanged;
+                _session.TrackingChanged -= HandleStateChanged;
+                _session = null;
+                _inactiveStatus = DisabledStatus;
+                SetRootsActive(controllerInteractionRoots, false);
+                SetRootsActive(handInteractionRoots, false);
+            }
         }
 
         private void Update()
         {
-            // Controller reconnect & scan
-            if (_leftDeviceCache == null || !_leftDeviceCache.added || _rightDeviceCache == null || !_rightDeviceCache.added)
+            if (_session == null) return;
+            _session.Sample(Time.unscaledDeltaTime);
+            DispatchGestures(XRSide.Left);
+            DispatchGestures(XRSide.Right);
+            _suppressWarning = false;
+            if ((enableDebugLog || enableFileLog) && logIntervalSeconds > 0f &&
+                Time.unscaledTime - _lastLogTime >= logIntervalSeconds)
             {
-                if (Time.unscaledTime - _lastDeviceSearchTime > 1.0f)
-                {
-                    _lastDeviceSearchTime = Time.unscaledTime;
-                    XRDeviceStateCore.FindControllers(out _leftDeviceCache, out _rightDeviceCache);
-                }
-            }
-
-            // Input binding diagnostics on first connection
-            DiagnoseActionsOnce();
-
-            // 1. Core tracking evaluation via XRDeviceStateCore
-            bool isLeftCurrentlyTracked = XRDeviceStateCore.EvaluateControllerState(
-                "[L]", _leftDeviceCache, leftIsTrackedAction, leftTrackingStateAction,
-                filterMethod, require6DoF, frameTolerance, lostToleranceSeconds,
-                maxHumanSpeed, minLinVelForTracking, posJumpMinDelta, posJumpMaxImpliedSpeed,
-                enableDebugLog || enableFileLog, ref _leftState);
-
-            bool isRightCurrentlyTracked = XRDeviceStateCore.EvaluateControllerState(
-                "[R]", _rightDeviceCache, rightIsTrackedAction, rightTrackingStateAction,
-                filterMethod, require6DoF, frameTolerance, lostToleranceSeconds,
-                maxHumanSpeed, minLinVelForTracking, posJumpMinDelta, posJumpMaxImpliedSpeed,
-                enableDebugLog || enableFileLog, ref _rightState);
-
-            _leftState.isTrackedUIState = isLeftCurrentlyTracked;
-            _rightState.isTrackedUIState = isRightCurrentlyTracked;
-
-            float dt = Time.deltaTime;
-            int rawLeftState = GetRawLeftTrackingState();
-            int rawRightState = GetRawRightTrackingState();
-
-            // 2. Swing & combo detection: calculated by XRDeviceStateCore, dispatched by eventDispatcher
-            ProcessShakeDetection(true, _leftDeviceCache, rawLeftState);
-            ProcessShakeDetection(false, _rightDeviceCache, rawRightState);
-
-            // 3. Warning evaluation
-            bool isLeftWarning = XRDeviceStateCore.ProcessWarningTimer(_leftDeviceCache, rawLeftState, isLeftCurrentlyTracked, warningMinDurationSeconds, dt, ref _leftState);
-            bool isRightWarning = XRDeviceStateCore.ProcessWarningTimer(_rightDeviceCache, rawRightState, isRightCurrentlyTracked, warningMinDurationSeconds, dt, ref _rightState);
-
-            bool isLeftOK = isLeftCurrentlyTracked && !isLeftWarning;
-            bool isRightOK = isRightCurrentlyTracked && !isRightWarning;
-
-            if (_isInitialized && ((_leftWasOK && !isLeftOK) || (_rightWasOK && !isRightOK)))
-            {
-                if (Time.time - _lastWarnTime >= warnCooldownSeconds)
-                {
-                    _lastWarnTime = Time.time;
-                    eventDispatcher?.DispatchControllerTrackWarn();
-                }
-            }
-
-            _leftWasOK = isLeftOK;
-            _rightWasOK = isRightOK;
-
-            // 4. Tracking and warning status event dispatch: delegated to XRDeviceEventDispatcher
-            bool leftStateChanged = !_isInitialized || isLeftCurrentlyTracked != _leftWasTracked || isLeftWarning != _leftWasWarning;
-            if (leftStateChanged)
-            {
-                if (_isInitialized)
-                {
-                    if (isLeftCurrentlyTracked != _leftWasTracked)
-                    {
-                        eventDispatcher?.DispatchTrackingChanged(true, isLeftCurrentlyTracked);
-                    }
-                    eventDispatcher?.DispatchTrackingState(true, isLeftCurrentlyTracked, isLeftWarning);
-                }
-                _leftWasTracked = isLeftCurrentlyTracked;
-                _leftWasWarning = isLeftWarning;
-            }
-
-            bool rightStateChanged = !_isInitialized || isRightCurrentlyTracked != _rightWasTracked || isRightWarning != _rightWasWarning;
-            if (rightStateChanged)
-            {
-                if (_isInitialized)
-                {
-                    if (isRightCurrentlyTracked != _rightWasTracked)
-                    {
-                        eventDispatcher?.DispatchTrackingChanged(false, isRightCurrentlyTracked);
-                    }
-                    eventDispatcher?.DispatchTrackingState(false, isRightCurrentlyTracked, isRightWarning);
-                }
-                _rightWasTracked = isRightCurrentlyTracked;
-                _rightWasWarning = isRightWarning;
-            }
-
-            if (!_isInitialized)
-            {
-                eventDispatcher?.DispatchTrackingState(true, isLeftCurrentlyTracked, isLeftWarning);
-                eventDispatcher?.DispatchTrackingState(false, isRightCurrentlyTracked, isRightWarning);
-            }
-
-            // 6. Logging formatting & output
-            if (enableDebugLog || enableFileLog)
-            {
-                Vector3 leftLinVel = GetLinearVelocity(true, _leftDeviceCache);
-                Vector3 leftAngVel = GetAngularVelocity(true, _leftDeviceCache);
-                Vector3 leftLinAccel = GetLinearAcceleration(true, _leftDeviceCache);
-                Vector3 leftAngAccel = GetAngularAcceleration(true, _leftDeviceCache);
-
-                XRDeviceStateCore.LogHandState("[L]", _leftDeviceCache, rawLeftState, isLeftCurrentlyTracked, isLeftWarning,
-                    logIntervalSeconds, enableDebugLog, enableFileLog, leftLinVel, leftAngVel, leftLinAccel, leftAngAccel,
-                    ref _leftState, ref _leftLogCache);
-
-                Vector3 rightLinVel = GetLinearVelocity(false, _rightDeviceCache);
-                Vector3 rightAngVel = GetAngularVelocity(false, _rightDeviceCache);
-                Vector3 rightLinAccel = GetLinearAcceleration(false, _rightDeviceCache);
-                Vector3 rightAngAccel = GetAngularAcceleration(false, _rightDeviceCache);
-
-                XRDeviceStateCore.LogHandState("[R]", _rightDeviceCache, rawRightState, isRightCurrentlyTracked, isRightWarning,
-                    logIntervalSeconds, enableDebugLog, enableFileLog, rightLinVel, rightAngVel, rightLinAccel, rightAngAccel,
-                    ref _rightState, ref _rightLogCache);
-            }
-
-            _isInitialized = true;
-        }
-
-        private void ProcessShakeDetection(bool isLeft, XRController device, int rawTrackingState)
-        {
-            if (rawTrackingState == 0)
-            {
-                if (isLeft)
-                {
-                    _leftState.swingHistory1 = -999f;
-                    _leftState.swingHistory2 = -999f;
-                }
-                else
-                {
-                    _rightState.swingHistory1 = -999f;
-                    _rightState.swingHistory2 = -999f;
-                }
-                return;
-            }
-
-            Vector3 linAccel = GetLinearAcceleration(isLeft, device);
-            bool isSingleSwing, isTripleSwing, isAnyShake;
-
-            if (isLeft)
-            {
-                XRDeviceStateCore.DetectShakeWithAcceleration(linAccel, shakeAccelThreshold, swingCooldownDuration, maxComboInterval,
-                    ref _leftState, out isSingleSwing, out isTripleSwing, out isAnyShake);
-            }
-            else
-            {
-                XRDeviceStateCore.DetectShakeWithAcceleration(linAccel, shakeAccelThreshold, swingCooldownDuration, maxComboInterval,
-                    ref _rightState, out isSingleSwing, out isTripleSwing, out isAnyShake);
-            }
-
-            if (eventDispatcher != null)
-            {
-                if (isSingleSwing) eventDispatcher.DispatchSwing(isLeft);
-                if (isTripleSwing) eventDispatcher.DispatchTripleSwing(isLeft);
-                if (isAnyShake) eventDispatcher.DispatchAnyShake();
+                _lastLogTime = Time.unscaledTime;
+                LogState(XRSide.Left, GetState(XRSide.Left));
+                LogState(XRSide.Right, GetState(XRSide.Right));
             }
         }
 
-        private void OnDeviceChange(InputDevice device, InputDeviceChange change)
+        public XRProviderStatus SetMode(XRInputMode mode)
         {
-            if (change == InputDeviceChange.Added || change == InputDeviceChange.Removed ||
-                change == InputDeviceChange.Reconnected || change == InputDeviceChange.Disconnected ||
-                change == InputDeviceChange.ConfigurationChanged)
+            RequireSession();
+            ValidateInteractionRoots();
+            return _session.SetMode(mode);
+        }
+        [ContextMenu("Input Mode/Use Controllers")]
+        public void UseControllers() => SetMode(XRInputMode.Controller);
+        [ContextMenu("Input Mode/Use Hands")]
+        public void UseHands() => SetMode(XRInputMode.Hand);
+        public XRProviderStatus RefreshProvider()
+        {
+            RequireSession();
+            ValidateInteractionRoots();
+            _suppressWarning = true;
+            return _session.RefreshProvider();
+        }
+        [ContextMenu("Input Mode/Refresh Selected Provider")]
+        public void RefreshSelectedProvider() => RefreshProvider();
+        public XRDeviceState GetState(XRSide side)
+        {
+            if (side != XRSide.Left && side != XRSide.Right) throw new ArgumentOutOfRangeException(nameof(side));
+            return _session != null ? _session.GetState(side) :
+                new XRDeviceState(new XRDeviceSample(_inactiveStatus, InputTrackingState.None, false), false);
+        }
+        public int GetRawLeftTrackingState() => (int)GetState(XRSide.Left).RawTrackingState;
+        public int GetRawRightTrackingState() => (int)GetState(XRSide.Right).RawTrackingState;
+        public int GetLeftTrackingState() => IsLeftTracked ? GetRawLeftTrackingState() : 0;
+        public int GetRightTrackingState() => IsRightTracked ? GetRawRightTrackingState() : 0;
+
+        private void RequireSession()
+        {
+            if (_session == null) throw new InvalidOperationException("Enable and configure the XR device state monitor before changing its provider.");
+        }
+
+        private XRDeviceStateSettings CreateSettings() => new XRDeviceStateSettings
+        {
+            Filter = filterMethod, Require6DoF = require6DoF, FrameTolerance = frameTolerance,
+            LostToleranceSeconds = lostToleranceSeconds, MaxHumanSpeed = maxHumanSpeed,
+            MinLinearVelocity = minLinVelForTracking, PositionJumpMinDelta = posJumpMinDelta,
+            PositionJumpMaxSpeed = posJumpMaxImpliedSpeed, WarningHoldSeconds = warningMinDurationSeconds,
+            EnableSwingDetection = enableSwingDetection, SwingSpeedThreshold = swingSpeedThreshold,
+            SwingCooldownSeconds = swingCooldownDuration, TripleSwingWindowSeconds = maxComboInterval
+        };
+
+        private IXRDeviceStateProvider CreateProvider(XRInputMode mode)
+        {
+            switch (mode)
             {
-                XRDeviceStateCore.FindControllers(out _leftDeviceCache, out _rightDeviceCache);
+                case XRInputMode.Controller:
+                    return new XRControllerStateProvider();
+                case XRInputMode.Hand:
+                    var manager = XRGeneralSettings.Instance != null ? XRGeneralSettings.Instance.Manager : null;
+                    var loader = manager != null ? manager.activeLoader : null;
+                    return new XRHandStateProvider(loader != null ? loader.GetLoadedSubsystem<XRHandSubsystem>() : null);
+                default: throw new ArgumentOutOfRangeException(nameof(mode));
             }
         }
 
-        private void EnableActionProperty(InputActionProperty property)
+        private void HandleModeChanged(XRInputMode mode)
         {
-            if (property.action != null)
-            {
-                property.action.Enable();
-            }
+            inputMode = mode;
+            _suppressWarning = true;
+            _lastWarnTime = float.NegativeInfinity;
+            ApplyInteractionMode(mode);
+            eventDispatcher.DispatchModeChanged(mode);
+            ModeChanged?.Invoke(mode);
         }
-
-        private void DisableActionProperty(InputActionProperty property)
+        private void HandleProviderStatusChanged(XRProviderStatus status)
         {
-            if (property.action != null)
-            {
-                property.action.Disable();
-            }
+            eventDispatcher.DispatchProviderStatus(status);
+            ProviderStatusChanged?.Invoke(status);
         }
-
-        private void DiagnoseActionsOnce()
+        private void HandleStateChanged(XRSide side, XRDeviceState state)
         {
-            if ((!enableDebugLog && !enableFileLog) || _leftDeviceCache == null || !_leftDeviceCache.added) return;
-
-            if (!_leftDiagDone)
+            bool isLeft = side == XRSide.Left;
+            var previous = isLeft ? _lastLeft : _lastRight;
+            bool initialized = isLeft ? _hasLeftState : _hasRightState;
+            if (!state.Status.IsReady && state.Status.Code != XRProviderStatusCode.Disabled &&
+                (!initialized || !state.Status.Equals(previous.Status)))
+                Debug.LogError($"[XRDeviceState] {Mode} {side}: {state.Status}", this);
+            if (initialized && previous.IsTracked != state.IsTracked)
+                eventDispatcher.DispatchTrackingChanged(isLeft, state.IsTracked);
+            eventDispatcher.DispatchTrackingState(isLeft, state.IsTracked, state.IsWarning);
+            if (initialized && !_suppressWarning &&
+                previous.IsTracked && !previous.IsWarning && (!state.IsTracked || state.IsWarning) &&
+                Time.unscaledTime - _lastWarnTime >= warnCooldownSeconds)
             {
-                _leftDiagDone = true;
-                DiagnoseAction("L linVel", leftLinearVelocityAction);
-                DiagnoseAction("L angVel", leftAngularVelocityAction);
-                DiagnoseAction("L linAccel", leftLinearAccelerationAction);
-                DiagnoseAction("L angAccel", leftAngularAccelerationAction);
+                _lastWarnTime = Time.unscaledTime;
+                eventDispatcher.DispatchTrackingWarning();
             }
-
-            if (!_rightDiagDone && _rightDeviceCache != null && _rightDeviceCache.added)
-            {
-                _rightDiagDone = true;
-                DiagnoseAction("R linVel", rightLinearVelocityAction);
-                DiagnoseAction("R angVel", rightAngularVelocityAction);
-                DiagnoseAction("R linAccel", rightLinearAccelerationAction);
-                DiagnoseAction("R angAccel", rightAngularAccelerationAction);
-            }
+            if (isLeft) { _lastLeft = state; _hasLeftState = true; }
+            else { _lastRight = state; _hasRightState = true; }
+            if (enableDebugLog || enableFileLog) LogState(side, state);
+            TrackingChanged?.Invoke(side, state);
         }
-
-        private void DiagnoseAction(string label, InputActionProperty property)
+        private void DispatchGestures(XRSide side)
         {
-            var action = property.action;
-            if (action == null)
+            XRGesture gestures = GetState(side).Gestures;
+            if ((gestures & XRGesture.Swing) != 0) eventDispatcher.DispatchSwing(side == XRSide.Left);
+            if ((gestures & XRGesture.TripleSwing) != 0) eventDispatcher.DispatchTripleSwing(side == XRSide.Left);
+            if (gestures != XRGesture.None) eventDispatcher.DispatchAnyShake();
+        }
+        private void LogState(XRSide side, XRDeviceState state)
+        {
+            string linear = state.Raw.LinearVelocity.HasValue ? state.Raw.LinearVelocity.Value.ToString("F3") : "unavailable";
+            string angular = state.Raw.AngularVelocity.HasValue ? state.Raw.AngularVelocity.Value.ToString("F3") : "unavailable";
+            string message = $"[XRDeviceState] {Mode} {side}: {state.Status}, tracked={state.IsTracked}, rawTracked={state.Raw.IsTracked}, warning={state.IsWarning}, raw={state.RawTrackingState}, linearVelocity={linear} m/s, angularVelocity={angular} rad/s";
+            if (enableDebugLog) Debug.Log(message, this);
+            if (enableFileLog) UTXR.Core.Logger.LogApp(message);
+        }
+        private void ValidateInteractionRoots()
+        {
+            if (controllerInteractionRoots == null || handInteractionRoots == null)
+                throw new ArgumentException("Interaction root arrays must be configured explicitly; use empty arrays for state-only monitoring.");
+            foreach (var root in controllerInteractionRoots)
             {
-                XRDeviceStateCore.DispatchLog($"[XR][DIAG] {label}: action null", LogType.Log, enableDebugLog, enableFileLog);
-                return;
+                ValidateRoot(root);
+                foreach (var handRoot in handInteractionRoots)
+                    if (root != null && handRoot != null &&
+                        (root.transform.IsChildOf(handRoot.transform) || handRoot.transform.IsChildOf(root.transform)))
+                        throw new ArgumentException("Hand and controller interaction roots must not overlap or contain each other.");
             }
-            string enabledStr = action.enabled ? "enabled" : "DISABLED";
-            string activeCtrl = action.activeControl != null ? action.activeControl.path : "none";
-            int bindCount = action.bindings.Count;
-            XRDeviceStateCore.DispatchLog($"[XR][DIAG] {label}: {enabledStr} | bindings={bindCount} | activeCtrl={activeCtrl} | val={action.ReadValue<Vector3>()}", LogType.Log, enableDebugLog, enableFileLog);
+            foreach (var root in handInteractionRoots) ValidateRoot(root);
+        }
+        private void ValidateRoot(GameObject root)
+        {
+            if (root == null) throw new ArgumentException("Remove null interaction-root entries or assign them explicitly.");
+            if (transform.IsChildOf(root.transform))
+                throw new ArgumentException("Interaction roots must not contain the monitor; it must stay active in both modes.");
+        }
+        private void ApplyInteractionMode(XRInputMode mode)
+        {
+            SetRootsActive(controllerInteractionRoots, false);
+            SetRootsActive(handInteractionRoots, false);
+            SetRootsActive(mode == XRInputMode.Controller ? controllerInteractionRoots : handInteractionRoots, true);
+        }
+        private static void SetRootsActive(GameObject[] roots, bool active)
+        {
+            foreach (var root in roots) if (root != null) root.SetActive(active);
         }
     }
 }

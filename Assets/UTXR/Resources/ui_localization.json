@@ -119,11 +119,6 @@
     "en_Au": "Developer",
     "jp": "開発者"
   },
-  "TCP": {
-    "zh_CN": "主机",
-    "en_Au": "Host",
-    "jp": "ホスト"
-  },
   "Port": {
     "zh_CN": "端口",
     "en_Au": "Port",
@@ -133,11 +128,6 @@
     "zh_CN": "端口",
     "en_Au": " Port",
     "jp": "ポート"
-  },
-  "UDP": {
-    "zh_CN": "体感控制",
-    "en_Au": "Data",
-    "jp": "体感制御"
   },
   " stop sending": {
     "zh_CN": "停止发送",
@@ -454,11 +444,6 @@
     "en_Au": "Mono",
     "jp": "モノラル"
   },
-  "Toggle developer panel": {
-    "zh_CN": "切换开发者面板",
-    "en_Au": "Toggle developer panel",
-    "jp": "開発者パネルの切り替え"
-  },
   "Calibrate": {
     "zh_CN": "校准",
     "en_Au": "Calibrate",
@@ -483,5 +468,70 @@
     "zh_CN": "隐藏边界",
     "en_Au": "Suppress Boundary",
     "jp": "境界抑制"
+  },
+  "IP Address": {
+    "zh_CN": "IP 地址",
+    "en_Au": "IP Address",
+    "jp": "IPアドレス"
+  },
+  "Point Step": {
+    "zh_CN": "点采样步长",
+    "en_Au": "Point Step",
+    "jp": "点のサンプリング間隔"
+  },
+  "Network Interface": {
+    "zh_CN": "网络接口",
+    "en_Au": "Network Interface",
+    "jp": "ネットワークインターフェース"
+  },
+  "Data Publish": {
+    "zh_CN": "数据发布",
+    "en_Au": "Data Publish",
+    "jp": "データ配信"
+  },
+  "FPS": {
+    "zh_CN": "帧率",
+    "en_Au": "FPS",
+    "jp": "フレームレート"
+  },
+  "Hand": {
+    "zh_CN": "手部",
+    "en_Au": "Hand",
+    "jp": "ハンド"
+  },
+  "Mesh LOD": {
+    "zh_CN": "网格细节级别",
+    "en_Au": "Mesh LOD",
+    "jp": "メッシュLOD"
+  },
+  "Dither": {
+    "zh_CN": "抖动",
+    "en_Au": "Dither",
+    "jp": "ディザリング"
+  },
+  "Domain ID": {
+    "zh_CN": "域 ID",
+    "en_Au": "Domain ID",
+    "jp": "ドメインID"
+  },
+  "Lock Input Mode to": {
+    "zh_CN": "输入模式锁定为",
+    "en_Au": "Lock Input Mode to",
+    "jp": "入力モードを固定"
+  },
+  "Point Size": {
+    "zh_CN": "点大小",
+    "en_Au": "Point Size",
+    "jp": "点のサイズ"
+  },
+  "Render Mode": {
+    "zh_CN": "渲染模式",
+    "en_Au": "Render Mode",
+    "jp": "描画モード"
+  },
+  "Target IP": {
+    "zh_CN": "目标 IP",
+    "en_Au": "Target IP",
+    "jp": "接続先IP"
   }
 }

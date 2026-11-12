@@ -82,6 +82,13 @@ CDDS_EXPORT void cdds_destroy_entity(int handle);
 
 // Raw Struct-Level Access (Direct Memory)
 CDDS_EXPORT int cdds_publish_raw(int pub_handle, const void* sample_data);
+// Raw receive buffers must be zero-initialized native structs of the subscriber's exact type.
+// Reusable sample allocations below own nested arrays/strings; never pass managed inline arrays.
+// take_raw: 1 = valid sample, 0 = no valid data, negative = DDS error. No loaned pointers escape.
+// Reuse the same initialized sample, then free it exactly once with its matching type.
+CDDS_EXPORT size_t cdds_sample_size(dds_msg_type_t type);
+CDDS_EXPORT void* cdds_sample_alloc(dds_msg_type_t type);
+CDDS_EXPORT void cdds_sample_free(dds_msg_type_t type, void* sample);
 CDDS_EXPORT int cdds_take_raw(int sub_handle, void* out_sample, size_t sample_size);
 
 // Low-Level std_msgs Publishing
@@ -101,6 +108,9 @@ CDDS_EXPORT int cdds_publish_uint16(int pub_handle, uint16_t value);
 CDDS_EXPORT int cdds_publish_uint32(int pub_handle, uint32_t value);
 CDDS_EXPORT int cdds_publish_uint64(int pub_handle, uint64_t value);
 CDDS_EXPORT int cdds_publish_string(int pub_handle, const char* str);
+// Standard Float32MultiArray with empty layout.dim and data_offset=0. Full layouts use publish_raw.
+// data is borrowed for the duration of this call; count=0 permits data=NULL.
+CDDS_EXPORT int cdds_publish_float32_multi_array(int pub_handle, const float* data, uint32_t count);
 
 // Low-Level geometry_msgs Publishing
 CDDS_EXPORT int cdds_publish_point(int pub_handle, double x, double y, double z);

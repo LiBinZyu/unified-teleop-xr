@@ -103,6 +103,38 @@ namespace CycloneDDS
         public StdString(string val) { data = val ?? string.Empty; }
     }
 
+    // Native sequence view. buffer belongs to its DdsRawSample; release is a C bool (one byte).
+    [StructLayout(LayoutKind.Sequential)]
+    public struct DdsSequence
+    {
+        public uint maximum;
+        public uint length;
+        public IntPtr buffer;
+        public byte release;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct StdMultiArrayDimension
+    {
+        public IntPtr label; // UTF-8 string owned by the containing native sample.
+        public uint size;
+        public uint stride;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct StdMultiArrayLayout
+    {
+        public DdsSequence dim;
+        public uint data_offset;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct StdFloat32MultiArray
+    {
+        public StdMultiArrayLayout layout;
+        public DdsSequence data;
+    }
+
     // ==========================================
     // geometry_msgs structs
     // ==========================================

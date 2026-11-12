@@ -292,6 +292,8 @@ namespace UTXR.Core
             }
         }
     
+        public static void LogFile(string message, LogType type = LogType.Log) => LogApp(message, type);
+
         public static void LogApp(string message, LogType type = LogType.Log)
         {
             if (Instance == null || !Instance._isRunning) return;

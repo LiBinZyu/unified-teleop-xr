@@ -5,7 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UTXR.Core;
-using Logger = UTXR.Core.Logger;
+using Logger = Network.InterfaceInfo.NetworkLogger;
 
 namespace UTXR.UI
 {
@@ -184,7 +184,11 @@ namespace UTXR.UI
         private void SyncSubscription()
         {
             var current = NetworkService;
-            if (_subscribedService == current) return;
+            if (_subscribedService == current)
+            {
+                if (current == null) RenderSnapshot(NetworkSnapshot.Empty);
+                return;
+            }
             if (_subscribedService != null)
                 _subscribedService.OnInterfacesChanged -= HandleInterfacesChanged;
             _subscribedService = current;
@@ -193,6 +197,7 @@ namespace UTXR.UI
                 _subscribedService.OnInterfacesChanged += HandleInterfacesChanged;
                 RenderSnapshot(_subscribedService.CurrentSnapshot);
             }
+            else RenderSnapshot(NetworkSnapshot.Empty);
         }
 
         private void OnDestroy()
@@ -342,7 +347,7 @@ namespace UTXR.UI
                 if (!bound)
                 {
                     Logger.LogApp("[NetDiag][UI] primaryNetworkItem cleared (no eligible interface)");
-                    primaryNetworkItem.Clear();
+                    primaryNetworkItem.Clear(offlineIcon);
                 }
             }
 
@@ -357,6 +362,8 @@ namespace UTXR.UI
         private void RefreshDropdown(NetworkSnapshot snapshot)
         {
             if (_dropdown == null || snapshot == null) return;
+            // A selectable NIC dropdown is owned by the network module's preference bridge.
+            if (_dropdown.GetComponent<NetworkInterfacePrefBridge>() != null) return;
 
             string selectedId = _dropdownIds.Count > _dropdown.value && _dropdown.value >= 0
                 ? _dropdownIds[_dropdown.value] : null;

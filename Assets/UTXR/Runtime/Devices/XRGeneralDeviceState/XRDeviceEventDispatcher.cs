@@ -1,23 +1,32 @@
 using System;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace UTXR.Devices
 {
     /// <summary>
-    /// Event dispatcher for XR devices and controllers.
+    /// Event dispatcher for controller and hand modes.
     /// Broadcasts tracking state changes, warnings, swings, and combo shakes.
     /// Provides both UnityEvents for Inspector bindings and high-performance C# Action delegates for code listeners.
     /// </summary>
     [DisallowMultipleComponent]
     public class XRDeviceEventDispatcher : MonoBehaviour
     {
+        [Header("Explicit Mode and Provider Status")]
+        public UnityEvent<XRInputMode> OnModeChanged;
+        public UnityEvent<string> OnProviderStatusChanged;
+
+        public void DispatchModeChanged(XRInputMode mode) => OnModeChanged?.Invoke(mode);
+        public void DispatchProviderStatus(XRProviderStatus status) => OnProviderStatusChanged?.Invoke(status.ToString());
+
         [Header("Tracking Status UnityEvents")]
         public UnityEvent OnLeftTracked;
         public UnityEvent OnLeftUntracked;
         public UnityEvent OnRightTracked;
         public UnityEvent OnRightUntracked;
-        public UnityEvent OnControllerTrackWarn;
+        [FormerlySerializedAs("OnControllerTrackWarn")]
+        public UnityEvent OnTrackingWarning;
 
         [Header("Shake / Swing UnityEvents")]
         public UnityEvent OnLeftSwing;
@@ -36,7 +45,7 @@ namespace UTXR.Devices
         public event Action OnLeftUntrackedAction;
         public event Action OnRightTrackedAction;
         public event Action OnRightUntrackedAction;
-        public event Action OnControllerTrackWarnAction;
+        public event Action OnTrackingWarningAction;
 
         public event Action OnLeftSwingAction;
         public event Action OnRightSwingAction;
@@ -99,12 +108,12 @@ namespace UTXR.Devices
         }
 
         /// <summary>
-        /// Dispatches controller tracking warning event.
+        /// Dispatches a tracking warning from either mode.
         /// </summary>
-        public void DispatchControllerTrackWarn()
+        public void DispatchTrackingWarning()
         {
-            OnControllerTrackWarn?.Invoke();
-            OnControllerTrackWarnAction?.Invoke();
+            OnTrackingWarning?.Invoke();
+            OnTrackingWarningAction?.Invoke();
         }
 
         /// <summary>

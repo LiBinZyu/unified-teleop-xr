@@ -43,8 +43,4 @@ MonoBehaviour:
     packageVersionOrUrl: file:D:/apex_teleop/misc/PicoLivePreview
   - packageId: com.unity.xr.openxr.picoxr
     packageVersionOrUrl: file:D:/apex_teleop/misc/UnityOpenXRIntegrationSDK-1.4.0-20250407
-  metaDependencies:
-  - packageId: com.meta.xr.mrutilitykit
-    packageVersionOrUrl: 85.0.0
-  - packageId: com.meta.xr.sdk.core
-    packageVersionOrUrl: 85.0.0
+  metaDependencies: []
