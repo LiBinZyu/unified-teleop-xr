@@ -8,11 +8,10 @@
 
 <kbd>OpenXR</kbd> <kbd>CycloneDDS</kbd> <kbd>ROS 2</kbd> <kbd>Unity</kbd>
 
-<table align="center">
+<table align="center">1
   <tr>
     <td><img src="./doc/UTXR.jpg" width="650"></td>
     <td><img src="./doc/UTXRSpatialVideo.gif" width="316"></td>
-  </tr>
 </table>
 
 <p>

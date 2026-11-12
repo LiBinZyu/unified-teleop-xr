@@ -18,7 +18,7 @@ Stream head, eye, hands, controllers, and body-tracking data from Meta Quest and
 <p>
   <a href="#quick-start">Quick Start ↗</a> ·
   <a href="#architecture">Architecture ↗</a> ·
-  <a href="#data">Data &amp; Topics ↗</a> ·
+  <a href="#data">Data ↗</a> ·
   <a href="#gpu-reconstructed-spatial-video">Spatial Video ↗</a> ·
   <a href="#supported-devices">Devices ↗</a> ·
   <a href="./README_CN.md">中文 ↗</a>
