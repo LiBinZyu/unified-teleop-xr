@@ -5,15 +5,12 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
-    path: Assets/Scenes/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
-  - enabled: 0
-    path: Assets/Scenes/Main_pico 1.unity
-    guid: 51739d45a4a93f549b0f8337d4d84276
   - enabled: 1
     path: Assets/Scenes/Main_metaxr.unity
     guid: c03773359b5cb01439f36a57404f40fc
+  - enabled: 0
+    path: Assets/Scenes/Main_PICO.unity
+    guid: f64914ef91385b747a879604de7c0f27
   m_configObjects:
     Unity.XR.PICO.LivePreview.Settings: {fileID: 11400000, guid: 3e0739d072a5bbf4baa419ee83ae7a5f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

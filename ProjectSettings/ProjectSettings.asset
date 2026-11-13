@@ -145,6 +145,9 @@ PlayerSettings:
   bundleVersion: 0.1.1
   preloadedAssets:
   - {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -4870153132561768783, guid: 54b47394d2315d4438f2d287787fd28b, type: 2}
+  - {fileID: -7578354407051306821, guid: 1ca7e343c9e021842a00c7d13144d3e7, type: 2}
+  - {fileID: 11400000, guid: c5bef7306c526d44cb172a383c6ed738, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -838,9 +841,9 @@ PlayerSettings:
   webGLCloseOnQuit: 0
   webWasm2023: 0
   scriptingDefineSymbols:
-    Android: META_XR_SDK
-    Standalone: META_XR_SDK
-    Windows Store Apps: META_XR_SDK
+    Android: USE_INPUT_SYSTEM_POSE_CONTROL;META_XR_SDK
+    Standalone: USE_INPUT_SYSTEM_POSE_CONTROL;META_XR_SDK
+    Windows Store Apps: USE_INPUT_SYSTEM_POSE_CONTROL;META_XR_SDK
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

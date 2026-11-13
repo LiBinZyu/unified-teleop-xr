@@ -29,7 +29,6 @@ namespace UTXR.Editor
             public string packageVersionOrUrl;
         }
     
-        [Header("KernalMind OpenXR Build Platform Switch Rules")]
         public FeatureRule[] featureRules;
     
         [Header("Graphics API Settings")]

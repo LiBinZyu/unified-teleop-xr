@@ -51,6 +51,52 @@ namespace Record3D
 
         private Record3DManager TargetManager => _manager != null ? _manager : Record3DManager.Instance;
 
+        private static void BindSlider(Slider slider, string key, int min, int max, int defaultValue, Action<int> apply)
+        {
+            int saved = PlayerPrefsManager.GetInt(key, defaultValue);
+            int initial = Mathf.Clamp(saved, min, max);
+            if (initial != saved && PlayerPrefs.HasKey(key))
+                PlayerPrefsManager.SetInt(key, initial);
+
+            apply(initial);
+            if (slider == null) return;
+
+            InitializeSlider(slider, min, max, initial, true);
+            slider.onValueChanged.AddListener(value =>
+            {
+                int selected = Mathf.RoundToInt(value);
+                PlayerPrefsManager.SetInt(key, selected);
+                apply(selected);
+            });
+        }
+
+        private static void BindSlider(Slider slider, string key, float min, float max, float defaultValue, Action<float> apply)
+        {
+            float saved = PlayerPrefsManager.GetFloat(key, defaultValue);
+            float initial = Mathf.Clamp(float.IsNaN(saved) ? defaultValue : saved, min, max);
+            if (initial != saved && PlayerPrefs.HasKey(key))
+                PlayerPrefsManager.SetFloat(key, initial);
+
+            apply(initial);
+            if (slider == null) return;
+
+            InitializeSlider(slider, min, max, initial, false);
+            slider.onValueChanged.AddListener(value =>
+            {
+                PlayerPrefsManager.SetFloat(key, value);
+                apply(value);
+            });
+        }
+
+        private static void InitializeSlider(Slider slider, float min, float max, float initial, bool wholeNumbers)
+        {
+            slider.wholeNumbers = wholeNumbers;
+            slider.maxValue = max;
+            slider.minValue = min;
+            // Update existing value labels before the persistence listener is attached.
+            slider.value = initial;
+        }
+
         private void Start()
         {
             var mgr = TargetManager;
@@ -105,32 +151,27 @@ namespace Record3D
                 }
             });
 
-            // 3. Ingest FPS (1 - 60)
-            PlayerPrefsManager.Bind(_ingestFpsSlider, PREF_KEY_INGEST_FPS, mgr != null ? mgr.IngestFps : 30, fps =>
+            BindSlider(_ingestFpsSlider, PREF_KEY_INGEST_FPS, 1, 60, mgr != null ? mgr.IngestFps : 30, fps =>
             {
                 if (TargetManager != null) TargetManager.IngestFps = fps;
             });
 
-            // 3. Mesh LOD (1 - 8)
-            PlayerPrefsManager.Bind(_meshLodSlider, PREF_KEY_MESH_LOD, mgr != null ? mgr.MeshLod : 2, lod =>
+            BindSlider(_meshLodSlider, PREF_KEY_MESH_LOD, 1, 8, mgr != null ? mgr.MeshLod : 2, lod =>
             {
                 if (TargetManager != null) TargetManager.MeshLod = lod;
             });
 
-            // 4. Point Step (1 - 8)
-            PlayerPrefsManager.Bind(_pointStepSlider, PREF_KEY_POINT_STEP, mgr != null ? mgr.PointStep : 2, step =>
+            BindSlider(_pointStepSlider, PREF_KEY_POINT_STEP, 1, 8, mgr != null ? mgr.PointStep : 2, step =>
             {
                 if (TargetManager != null) TargetManager.PointStep = step;
             });
 
-            // 5. Point Size (0.5 - 15.0)
-            PlayerPrefsManager.Bind(_pointSizeSlider, PREF_KEY_POINT_SIZE, mgr != null ? mgr.PointSize : 3.0f, size =>
+            BindSlider(_pointSizeSlider, PREF_KEY_POINT_SIZE, 0.5f, 15.0f, mgr != null ? mgr.PointSize : 3.0f, size =>
             {
                 if (TargetManager != null) TargetManager.PointSize = size;
             });
 
-            // 6. Dither Range (0.005 - 0.30)
-            PlayerPrefsManager.Bind(_ditherRangeSlider, PREF_KEY_DITHER_RANGE, mgr != null ? mgr.DitherRange : 0.15f, dither =>
+            BindSlider(_ditherRangeSlider, PREF_KEY_DITHER_RANGE, 0.005f, 0.30f, mgr != null ? mgr.DitherRange : 0.15f, dither =>
             {
                 if (TargetManager != null) TargetManager.DitherRange = dither;
             });

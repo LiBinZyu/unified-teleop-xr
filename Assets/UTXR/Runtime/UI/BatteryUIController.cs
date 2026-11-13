@@ -33,6 +33,38 @@ namespace UTXR.UI
         private BatteryState _lastState = (BatteryState)(-1);
         private bool _isFirstUpdate = true;
 
+        /// <summary>
+        /// Caches percentage labels and TextMeshPro colors on first use so subsequent
+        /// lookups do not allocate strings. Shared by all battery UI instances.
+        /// </summary>
+        private static class BatteryStringCache
+        {
+            private static readonly string[] NormalStrings = new string[101];
+            private static readonly string[] LowStrings = new string[101];
+            private static readonly string[] ChargingStrings = new string[101];
+
+            static BatteryStringCache()
+            {
+                for (int i = 0; i <= 100; i++)
+                {
+                    NormalStrings[i] = i.ToString();
+                    LowStrings[i] = i.ToString();
+                    ChargingStrings[i] = i.ToString();
+                }
+            }
+
+            public static string GetFormattedString(int percentage, BatteryState state)
+            {
+                int index = Mathf.Clamp(percentage, 0, 100);
+                return state switch
+                {
+                    BatteryState.Charging => ChargingStrings[index],
+                    BatteryState.Low => LowStrings[index],
+                    _ => NormalStrings[index]
+                };
+            }
+        }
+
         private void OnEnable()
         {
             if (autoSubscribe)

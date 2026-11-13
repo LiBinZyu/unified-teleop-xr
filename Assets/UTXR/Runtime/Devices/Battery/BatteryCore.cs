@@ -126,39 +126,6 @@ namespace UTXR.Devices
     }
 
     /// <summary>
-    /// High-performance string cache for TextMeshPro battery percentage rendering.
-    /// Pre-allocates strings for 0..100 across Normal, Low, and Charging styles at startup,
-    /// completely eliminating per-frame and per-update string allocations (Zero-GC).
-    /// </summary>
-    public static class BatteryStringCache
-    {
-        private static readonly string[] NormalStrings = new string[101];
-        private static readonly string[] LowStrings = new string[101];
-        private static readonly string[] ChargingStrings = new string[101];
-
-        static BatteryStringCache()
-        {
-            for (int i = 0; i <= 100; i++)
-            {
-                NormalStrings[i] = i.ToString();
-                LowStrings[i] = $"<color=#E16661>{i}</color>";
-                ChargingStrings[i] = $"<color=white>{i}</color>";
-            }
-        }
-
-        public static string GetFormattedString(int percentage, BatteryState state)
-        {
-            int index = Mathf.Clamp(percentage, 0, 100);
-            return state switch
-            {
-                BatteryState.Charging => ChargingStrings[index],
-                BatteryState.Low => LowStrings[index],
-                _ => NormalStrings[index]
-            };
-        }
-    }
-
-    /// <summary>
     /// Pure C# stateful Battery Monitor Core.
     /// Manages state caching, threshold evaluation, and pure C# event dispatches.
     /// Decoupled from Unity MonoBehaviour lifecycle.

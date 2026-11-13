@@ -693,7 +693,7 @@
                     "isPartOfComposite": true
                 },
                 {
-                    "name": "Second",
+                    "name": "First",
                     "id": "08b0e0dd-156b-4c1c-85d8-6f77de083489",
                     "path": "<QuestTouchPlusController>{LeftHand}/pointerRotation",
                     "interactions": "",
@@ -704,9 +704,42 @@
                     "isPartOfComposite": true
                 },
                 {
-                    "name": "Third",
+                    "name": "First",
                     "id": "a94b2925-67ee-40e4-8c46-175715a6a372",
                     "path": "<QuestProTouchController>{LeftHand}/pointerRotation",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Rotation",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "19e7e0bb-65ee-485f-b62f-e66e9cfc2c3e",
+                    "path": "<PICO4UltraController>{LeftHand}/pointerRotation",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Rotation",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "c3e8f9d4-e92d-4af5-8762-fc267c3aaebd",
+                    "path": "<PICO4TouchController>{LeftHand}/pointerRotation",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Rotation",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "f4c115ca-f676-496d-9334-5e9f2967548f",
+                    "path": "<PICONeo3Controller>{LeftHand}/pointerRotation",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -803,6 +836,39 @@
                     "isPartOfComposite": true
                 },
                 {
+                    "name": "Second",
+                    "id": "03177b07-bade-4358-ae79-40fdc4fa98e7",
+                    "path": "<PICO4UltraController>{LeftHand}/pointerPosition",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Position",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "8432af57-b8fd-4666-93d7-78803f6a7cd0",
+                    "path": "<PICO4TouchController>{LeftHand}/pointerPosition",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Position",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "4e175a12-f60e-4726-bd98-beb9d9004bad",
+                    "path": "<PICONeo3Controller>{LeftHand}/pointerPosition",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Position",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
                     "name": "",
                     "id": "acdf9550-5529-4ff7-8558-73ecdf0d75bd",
                     "path": "<XRController>{LeftHand}/*",
@@ -858,7 +924,7 @@
                     "isPartOfComposite": true
                 },
                 {
-                    "name": "second",
+                    "name": "First",
                     "id": "e5a0e5a7-70d6-4024-9724-eec3b4b9652f",
                     "path": "<QuestTouchPlusController>{LeftHand}/trackingState",
                     "interactions": "",
@@ -869,9 +935,42 @@
                     "isPartOfComposite": true
                 },
                 {
-                    "name": "Third",
+                    "name": "First",
                     "id": "44380964-a149-46af-923b-d3961db2f5b7",
                     "path": "<QuestProTouchController>{LeftHand}/trackingState",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Tracking State",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "3fadac6e-0899-41d0-b76a-965b63ecf8ce",
+                    "path": "<PICO4UltraController>{LeftHand}/trackingState",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Tracking State",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "5ed7c38e-9a43-41b0-8281-4734a76ed35e",
+                    "path": "<PICO4TouchController>{LeftHand}/trackingState",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Tracking State",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "b7e2fe14-66e3-4be4-9f57-731c43466124",
+                    "path": "<PICONeo3Controller>{LeftHand}/trackingState",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -1789,6 +1888,17 @@
                 },
                 {
                     "name": "",
+                    "id": "9317af1a-b8e5-4387-b73a-579c365f0796",
+                    "path": "<HandInteraction>{LeftHand}/pinchTouched",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "UI Press",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "ca931b95-39e0-4db1-9887-f5a5f68298d4",
                     "path": "<HoloLensHand>{LeftHand}/selectPressed",
                     "interactions": "",
@@ -1824,6 +1934,17 @@
                     "name": "",
                     "id": "c4c2fc93-75fe-4910-95ca-6b1cc163a48a",
                     "path": "<HandInteraction>{LeftHand}/pointerActivateValue",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "UI Press Value",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "02f22037-61fc-48ed-b789-bd33f9c5912a",
+                    "path": "<HandInteraction>{LeftHand}/pinchValue",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -2371,7 +2492,7 @@
                     "isPartOfComposite": true
                 },
                 {
-                    "name": "Second",
+                    "name": "First",
                     "id": "0389bd31-0ea8-4155-9a6a-3a34772acc6e",
                     "path": "<QuestTouchPlusController>{RightHand}/pointerRotation",
                     "interactions": "",
@@ -2382,9 +2503,42 @@
                     "isPartOfComposite": true
                 },
                 {
-                    "name": "Third",
+                    "name": "First",
                     "id": "5af503d9-6b6c-4132-b6aa-60a20300cf2f",
                     "path": "<QuestProTouchController>{RightHand}/pointerRotation",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Rotation",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "5ce95d33-ef6c-4ad3-b15f-379bb6c3d065",
+                    "path": "<PICO4UltraController>{RightHand}/pointerRotation",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Rotation",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "2973ea7c-a7cc-4ef9-ada4-b4e0e5e832b8",
+                    "path": "<PICO4TouchController>{RightHand}/pointerRotation",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Rotation",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "a411bb90-ca7b-44b5-b2b1-f710b0b0d3a8",
+                    "path": "<PICONeo3Controller>{RightHand}/pointerRotation",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -2437,6 +2591,39 @@
                     "isPartOfComposite": true
                 },
                 {
+                    "name": "Second",
+                    "id": "c6a4aa29-f060-4fd3-8f6d-3e748b174249",
+                    "path": "<PICO4UltraController>{RightHand}/pointerPosition",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Position",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "c70b099a-79c3-4203-b5e0-0eabe9a9b570",
+                    "path": "<PICO4TouchController>{RightHand}/pointerPosition",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Position",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "864861eb-5e53-43e2-9879-2703baab74e7",
+                    "path": "<PICONeo3Controller>{RightHand}/pointerPosition",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Position",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
                     "name": "Integer Fallback",
                     "id": "fe28481a-23cd-497a-9267-8ca75766894f",
                     "path": "IntegerFallback",
@@ -2459,7 +2646,7 @@
                     "isPartOfComposite": true
                 },
                 {
-                    "name": "second",
+                    "name": "First",
                     "id": "1317ac9b-46c6-4a6f-8590-91d45722b276",
                     "path": "<QuestTouchPlusController>{RightHand}/trackingState",
                     "interactions": "",
@@ -2470,9 +2657,42 @@
                     "isPartOfComposite": true
                 },
                 {
-                    "name": "Third",
+                    "name": "First",
                     "id": "1e937d6d-bd87-4731-9c7e-87d350d809ed",
                     "path": "<QuestProTouchController>{RightHand}/trackingState",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Tracking State",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "3fd39266-8b83-4892-8a67-9726338f1193",
+                    "path": "<PICO4UltraController>{RightHand}/trackingState",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Tracking State",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "0c8293aa-75e1-46e0-945c-2d71c6174981",
+                    "path": "<PICO4TouchController>{RightHand}/trackingState",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controller Tracking State",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Second",
+                    "id": "962e4cb4-c2ad-4a8d-9cd0-6defe97542c3",
+                    "path": "<PICONeo3Controller>{RightHand}/trackingState",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -3412,6 +3632,17 @@
                 },
                 {
                     "name": "",
+                    "id": "b2565757-f3cf-4fc8-bf30-bf5bf5382131",
+                    "path": "<HandInteraction>{RightHand}/pinchTouched",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "UI Press",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "f8a900c7-8116-4f44-9d24-8f19caf07108",
                     "path": "<HoloLensHand>{RightHand}/selectPressed",
                     "interactions": "",
@@ -3447,6 +3678,17 @@
                     "name": "",
                     "id": "4bfac4d7-1bce-4fa7-a6b1-00eb7e5f346e",
                     "path": "<HandInteraction>{RightHand}/pointerActivateValue",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "UI Press Value",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "55c616fa-12b5-48e6-9289-58c7615fbe80",
+                    "path": "<HandInteraction>{RightHand}/pinchValue",
                     "interactions": "",
                     "processors": "",
                     "groups": "",

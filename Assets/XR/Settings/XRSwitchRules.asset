@@ -23,7 +23,7 @@ MonoBehaviour:
     enableOnMeta: 1
   - featureKeyword: handinteraction
     platformTarget: 0
-    enableOnPico: 0
+    enableOnPico: 1
     enableOnMeta: 1
   - featureKeyword: picog3controllerprofile
     platformTarget: 0
