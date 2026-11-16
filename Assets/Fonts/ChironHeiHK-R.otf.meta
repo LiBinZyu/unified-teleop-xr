@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 63ef7eebdc63448bc8393ab7311c780a
+guid: a2e06f0c063271d458184e681260757d
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - MiSans
+  - Chiron Hei HK
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

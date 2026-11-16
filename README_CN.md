@@ -4,7 +4,7 @@
 
 **让你的 XR 头显成为运动输入设备。**
 
-通过 CycloneDDS 将 Meta Quest 和 PICO 的头、眼、手部、控制器和身体追踪数据直接传输到 ROS 2，无需自行构建 Unity 应用。
+使用预编译应用，通过 CycloneDDS 将 Meta Quest 和 PICO 的头部、眼动、手部和手柄追踪数据直接传输到 ROS 2。
 
 <kbd>OpenXR</kbd> <kbd>CycloneDDS</kbd> <kbd>ROS 2</kbd> <kbd>Unity</kbd>
 
@@ -54,7 +54,7 @@ ros2 topic echo /xr/head/pose
 <a id="why-unified-teleop-xr"></a>
 ## 为什么选择 Unified Teleop XR？
 
-机器人开发者不应该为了读取头显位姿、手柄或身体追踪数据，而专门去构建 Unity 工程。
+机器人开发者可以通过预编译应用直接读取头显位姿和手柄数据。
 
 | 你的目标需求 | UTXR 的设计实现 |
 | --- | --- |
@@ -195,13 +195,6 @@ i = 21…25                                        Little
 </details>
 
 <details>
-<summary><b>身体追踪</b></summary>
-
-待补充。
-
-</details>
-
-<details>
 <summary>其它说明</summary>
 
 带 Header 的消息使用 `frame_id = xr_tracking`。坐标转换为 X 轴朝前、Y 轴朝左、Z 轴朝上，位置单位为米。
@@ -221,14 +214,20 @@ QoS：位姿、速度和关节数组为 BestEffort / Volatile / KeepLast(1)；�
 
 **手柄模式与手部追踪模式互斥。** 两种模式共用头部和眼动话题。切换模式会停止发布，需手动重新开启。
 
-### Safeguard 安全模式
+### 安全模式
 
-Safeguard 模式会对原始 OpenXR 输入数据进行安全后处理，主要作用于左右控制器/手部姿态。用于减少以下情况下的不安全或无效输出：
+安全模式会对原始 OpenXR 输入数据进行安全后处理，主要作用于左右控制器/手部姿态。用于减少以下情况下的不安全或无效输出：
 
 - 操作过程中控制器或手部追踪丢失。
 - 控制器掉落到地面。
 - 手部/控制器运动超过设定的人体运动限制。
 - 控制器被静止放置在某处，不再被判定为手持状态。
+
+### 身体追踪
+
+PICO Body Tracking 和 Meta XR Core Body Tracking 的 provider 分别读取各平台的身体关节位姿。Effortless Fullbody IK 基于 Final IK，从头部和双手的追踪位姿估算全身骨架，可扩展以适配不同平台和追踪输入。
+
+为了保持跨平台兼容性和开箱体验，预编译的 Release 版本暂未开放身体追踪。开发者可在 Unity 中自行配置并从源码构建。
 
 <a id="gpu-reconstructed-spatial-video"></a>
 <a id="video"></a>
@@ -257,7 +256,7 @@ iPhone Pro 的 RGB-D 数据流可通过 Wi-Fi 传输，并在 XR 中重建为空
 
 <details><summary>后续计划支持</summary>
 PCVR<br>
-Meta VR 眼镜<br>
+Meta VR Glasses<br>
 PICO Space Pro<br>
 SteamVR<br>
 HTC VIVE Focus<br>
@@ -266,5 +265,9 @@ Valve Index<br>
 HTC VIVE Pro / Pro 2<br>
 PS VR2<br>
 </details>
+
+## 许可证
+
+UTXR 自有代码采用 [MIT 许可证](LICENSE)，第三方组件遵循[各自的许可证](THIRD_PARTY_NOTICES.md)。
 
 如有问题、建议或需要支持，请在仓库提交 Issue，或发送邮件至 [rob.bingru.li@outlook.com](mailto:rob.bingru.li@outlook.com)。

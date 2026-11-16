@@ -4,7 +4,7 @@
 
 **Turn your XR headset into a motion input device.**
 
-Stream head, eye, hands, controllers, and body-tracking data from Meta Quest and PICO directly to ROS 2 over CycloneDDS — without building your own Unity application.
+Stream head, eye, hand, and controller tracking data from Meta Quest and PICO directly to ROS 2 over CycloneDDS using the prebuilt app.
 
 <kbd>OpenXR</kbd> <kbd>CycloneDDS</kbd> <kbd>ROS 2</kbd> <kbd>Unity</kbd>
 
@@ -56,7 +56,7 @@ ros2 topic echo /xr/head/pose
 <a id="why-unified-teleop-xr"></a>
 ## Why Unified Teleop XR?
 
-Robot developers should not need to build a Unity project just to read a headset's pose, controllers, or tracked body data.
+Robot developers can read headset poses and controller data using the prebuilt app.
 
 | You want to… | UTXR is designed to… |
 | --- | --- |
@@ -193,13 +193,6 @@ Whole-hand flags are sent separately in `hand_tracking_state/data`. Linear and a
 </details>
 
 <details>
-<summary><b>Body Tracking</b></summary>
-
-To be done
-
-</details>
-
-<details>
 <summary>Other details</summary>
 
 Messages with a Header use `frame_id = xr_tracking`. Coordinates are converted to X-forward, Y-left, Z-up; positions are in meters.
@@ -227,6 +220,12 @@ Safeguard mode applies safety post-processing to raw OpenXR input data, primaril
 - A controller is dropped to the floor.
 - Hand/controller motion exceeds a configured human-motion limit.
 - A controller is left stationary somewhere and should no longer be treated as being held.
+
+### Body Tracking
+
+The PICO Body Tracking and Meta XR Core Body Tracking providers read joint poses from their respective platforms. Effortless Fullbody IK uses Final IK to estimate a full-body skeleton from tracked head and hand poses, with an extensible setup for different platforms and tracking inputs.
+
+To keep the prebuilt releases cross-platform and easy to use, body tracking is currently disabled in those builds. Developers can configure it in Unity and build from source.
 
 <a id="video"></a>
 ## GPU-Reconstructed Spatial Video
@@ -262,5 +261,9 @@ Valve Index<br>
 HTC VIVE Pro / Pro 2<br>
 PS VR2<br>
 </details>
+
+## License
+
+UTXR's own code is available under the [MIT License](LICENSE). Third-party components follow their [own licenses](THIRD_PARTY_NOTICES.md).
 
 For questions, suggestions, or support, open an issue or email [rob.bingru.li@outlook.com](mailto:rob.bingru.li@outlook.com).
