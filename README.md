@@ -8,12 +8,9 @@ Stream head, eye, hand, and controller tracking data from Meta Quest and PICO di
 
 <kbd>OpenXR</kbd> <kbd>CycloneDDS</kbd> <kbd>ROS 2</kbd> <kbd>Unity</kbd>
 
-<table align="center">
-  <tr>
-    <td><img src="./doc/UTXR.jpg" width="650"></td>
-    <td><img src="./doc/UTXRSpatialVideo.gif" width="316"></td>
-  </tr>
-</table>
+<div align="center">
+  <img src="./doc/UTXR.jpg" style="width:100%; max-width:800px; border-radius: 16px; border: 1px solid #E4E4E8;">
+</div>
 
 <p>
   <a href="#quick-start">Quick Start ↗</a> ·
@@ -193,6 +190,12 @@ Whole-hand flags are sent separately in `hand_tracking_state/data`. Linear and a
 </details>
 
 <details>
+<summary>Body</summary>
+
+To be done
+</details>
+
+<details>
 <summary>Other details</summary>
 
 Messages with a Header use `frame_id = xr_tracking`. Coordinates are converted to X-forward, Y-left, Z-up; positions are in meters.
@@ -204,8 +207,8 @@ QoS: poses, velocities and joint arrays use BestEffort / Volatile / KeepLast(1);
 </details>
 
 <div style="display:flex; gap:10px;">
-  <img src="./doc/xr-subscriber.png" width="48%" style="border-radius: 12px; border: 1px solid #E4E4E8;">
-  <img src="./doc/xr-subscriber-monitor.png" width="48%" style="border-radius: 12px; border: 1px solid #E4E4E8;">
+  <img src="./doc/UTXR-body.jpg" width="60%" style="border-radius: 12px; border: 1px solid #E4E4E8;">
+  <img src="./doc/xr-subscriber-monitor.png" width="40%" style="border-radius: 12px; border: 1px solid #E4E4E8;">
 </div>
 
 The two figures show the [XR Subscriber](./CycloneDDS/subscriber/) interface when receiving dds messages from UTXR. This tool is made to debug and implemented a custom method to subscribe via c-plugin.

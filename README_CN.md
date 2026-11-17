@@ -8,11 +8,9 @@
 
 <kbd>OpenXR</kbd> <kbd>CycloneDDS</kbd> <kbd>ROS 2</kbd> <kbd>Unity</kbd>
 
-<table align="center">1
-  <tr>
-    <td><img src="./doc/UTXR.jpg" width="650"></td>
-    <td><img src="./doc/UTXRSpatialVideo.gif" width="316"></td>
-</table>
+<div align="center">
+  <img src="./doc/UTXR.jpg" style="width:100%; max-width:800px; border-radius: 16px; border: 1px solid #E4E4E8;">
+</div>
 
 <p>
   <a href="#quick-start">快速开始 ↗</a> ·
@@ -206,9 +204,10 @@ QoS：位姿、速度和关节数组为 BestEffort / Volatile / KeepLast(1)；�
 </details>
 
 <div style="display:flex; gap:10px;">
-  <img src="./doc/xr-subscriber.png" width="48%" style="border-radius: 12px; border: 1px solid #E4E4E8;">
-  <img src="./doc/xr-subscriber-monitor.png" width="48%" style="border-radius: 12px; border: 1px solid #E4E4E8;">
+  <img src="./doc/UTXR-body.jpg" width="60%" style="border-radius: 12px; border: 1px solid #E4E4E8;">
+  <img src="./doc/xr-subscriber-monitor.png" width="40%" style="border-radius: 12px; border: 1px solid #E4E4E8;">
 </div>
+
 
 上图展示了 [XR Subscriber](./CycloneDDS/subscriber/) 接收 UTXR 的 DDS 消息时的界面。这个调试工具通过 C 插件订阅消息。
 
